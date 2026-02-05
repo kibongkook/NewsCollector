@@ -99,8 +99,11 @@ class DeduplicationEngine:
                     used.add(j)
 
             # 클러스터 대표 선정: 가장 긴 본문
-            cluster_members = [news_list[k] for k in range(len(news_list)) if news_list[k].id in cluster_ids]
-            best = max(cluster_members, key=lambda n: len(n.body))
+            cluster_id_set = set(cluster_ids)
+            cluster_members = [n for n in news_list if n.id in cluster_id_set]
+            if not cluster_members:
+                continue
+            best = max(cluster_members, key=lambda n: len(n.body or ""))
 
             if len(cluster_ids) > 1:
                 best.cluster_id = str(uuid.uuid4())

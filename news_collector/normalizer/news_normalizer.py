@@ -43,7 +43,7 @@ class NewsNormalizer:
     ) -> NormalizedNews:
         """단일 RawNewsRecord를 NormalizedNews로 변환."""
         data = raw.raw_data or {}
-        title = self._clean_html(data.get("title", "") or raw.extracted_text[:200])
+        title = self._clean_html(data.get("title", "") or (raw.extracted_text or "")[:200])
         body = self._clean_html(
             data.get("description", "")
             or data.get("summary", "")
@@ -125,7 +125,7 @@ class NewsNormalizer:
             return None
         try:
             return dateutil_parser.parse(date_str)
-        except (ValueError, TypeError):
+        except (ValueError, TypeError, OverflowError):
             logger.debug("날짜 파싱 실패: %s", date_str)
             return None
 

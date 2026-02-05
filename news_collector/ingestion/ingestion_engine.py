@@ -84,10 +84,12 @@ class IngestionEngine:
     ) -> List[RawNewsRecord]:
         """모든 소스에서 병렬 수집."""
         tasks = []
+        task_sources: List[NewsSource] = []  # task와 source를 1:1 매핑
         for source in sources:
             connector = self._create_connector(source)
             if connector:
                 tasks.append(self._collect_from_source(connector, source, query_spec))
+                task_sources.append(source)
 
         if not tasks:
             return []
@@ -96,15 +98,13 @@ class IngestionEngine:
 
         all_records: List[RawNewsRecord] = []
         for i, result in enumerate(results):
-            source = sources[i] if i < len(sources) else None
+            source = task_sources[i]
             if isinstance(result, Exception):
-                logger.error("소스 수집 실패: %s - %s", source.id if source else "?", result)
-                if source:
-                    self._registry.record_failure(source.id)
+                logger.error("소스 수집 실패: %s - %s", source.id, result)
+                self._registry.record_failure(source.id)
             elif isinstance(result, list):
                 all_records.extend(result)
-                if source:
-                    self._registry.record_success(source.id)
+                self._registry.record_success(source.id)
 
         return all_records
 
