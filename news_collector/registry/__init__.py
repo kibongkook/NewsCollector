@@ -1,0 +1,1 @@
+from news_collector.registry.source_registry import SourceRegistry

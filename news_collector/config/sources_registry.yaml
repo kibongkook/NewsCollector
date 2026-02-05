@@ -1,0 +1,170 @@
+# 뉴스 소스 레지스트리 - Module 2 (Source Registry)
+
+# ===== Tier 정의 =====
+tier_definitions:
+  whitelist:
+    description: "공식 기관 발표, 정부, 공식 채널"
+    base_credibility: 95
+    weight: 1.0
+
+  tier1:
+    description: "주요 신문사, 검증된 대형 언론사"
+    base_credibility: 88
+    weight: 0.95
+
+  tier2:
+    description: "지역 언론사, 중소 매체"
+    base_credibility: 70
+    weight: 0.80
+
+  tier3:
+    description: "개인 블로그, 소규모 사이트"
+    base_credibility: 45
+    weight: 0.60
+
+  blacklist:
+    description: "스팸, 거짓 뉴스, 악성 사이트"
+    base_credibility: 0
+    weight: 0.0
+
+# ===== 뉴스 소스 =====
+sources:
+  # --- Whitelist: 공식 기관 ---
+  gov_briefing:
+    id: "gov_briefing"
+    name: "정부 브리핑"
+    tier: "whitelist"
+    ingestion_type: "rss"
+    base_url: "https://www.korea.kr/rss"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_locales: ["ko_KR"]
+    supported_categories: ["정치", "경제", "사회"]
+    credibility_base_score: 95
+    rate_limit:
+      requests_per_minute: 30
+      requests_per_hour: 500
+      daily_quota: 5000
+    cache_ttl_minutes: 60
+    provides_metadata:
+      author: true
+      views: false
+      shares: false
+      comments: false
+      publish_date: true
+
+  # --- Tier 1: 대형 언론사 ---
+  naver_news:
+    id: "naver_news"
+    name: "Naver News API"
+    tier: "tier1"
+    ingestion_type: "api"
+    base_url: "https://openapi.naver.com/v1/search/news.json"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_locales: ["ko_KR"]
+    supported_categories: ["정치", "경제", "사회", "IT", "과학", "문화", "스포츠", "연예"]
+    credibility_base_score: 88
+    rate_limit:
+      requests_per_minute: 100
+      requests_per_hour: 1000
+      daily_quota: 25000
+    cache_ttl_minutes: 30
+    provides_metadata:
+      author: false
+      views: false
+      shares: false
+      comments: false
+      publish_date: true
+
+  google_news:
+    id: "google_news"
+    name: "Google News RSS"
+    tier: "tier1"
+    ingestion_type: "rss"
+    base_url: "https://news.google.com/rss"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_locales: ["ko_KR", "en_US", "ja_JP"]
+    supported_categories: ["정치", "경제", "사회", "IT", "과학", "문화", "스포츠", "국제"]
+    credibility_base_score: 90
+    rate_limit:
+      requests_per_minute: 60
+      requests_per_hour: 600
+      daily_quota: 10000
+    cache_ttl_minutes: 20
+    provides_metadata:
+      author: false
+      views: false
+      shares: false
+      comments: false
+      publish_date: true
+
+  chosun_rss:
+    id: "chosun_rss"
+    name: "조선일보 RSS"
+    tier: "tier1"
+    ingestion_type: "rss"
+    base_url: "https://www.chosun.com/arc/outboundfeeds/rss/"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_locales: ["ko_KR"]
+    supported_categories: ["정치", "경제", "사회", "국제", "문화", "스포츠"]
+    credibility_base_score: 87
+    cache_ttl_minutes: 30
+    provides_metadata:
+      author: true
+      views: false
+      shares: false
+      comments: false
+      publish_date: true
+
+  joongang_rss:
+    id: "joongang_rss"
+    name: "중앙일보 RSS"
+    tier: "tier1"
+    ingestion_type: "rss"
+    base_url: "https://rss.joins.com"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_locales: ["ko_KR"]
+    supported_categories: ["정치", "경제", "사회", "국제", "IT"]
+    credibility_base_score: 86
+    cache_ttl_minutes: 30
+
+  # --- Tier 2: 중소 매체 ---
+  hani_rss:
+    id: "hani_rss"
+    name: "한겨레 RSS"
+    tier: "tier2"
+    ingestion_type: "rss"
+    base_url: "https://www.hani.co.kr/rss/"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_categories: ["정치", "경제", "사회", "국제"]
+    credibility_base_score: 75
+    cache_ttl_minutes: 30
+
+  # --- Tier 3: 소규모 ---
+  unknown_blog:
+    id: "unknown_blog"
+    name: "Unknown Tech Blog"
+    tier: "tier3"
+    ingestion_type: "web_crawl"
+    base_url: "https://unknownblog.example.com"
+    default_locale: "ko_KR"
+    default_timezone: "Asia/Seoul"
+    supported_categories: ["IT"]
+    credibility_base_score: 45
+    crawl_delay_seconds: 3
+    cache_ttl_minutes: 60
+
+  # --- Blacklist ---
+  spam_site:
+    id: "spam_site"
+    name: "Spam Content"
+    tier: "blacklist"
+    ingestion_type: "web_crawl"
+    base_url: "https://spam.example.com"
+    is_active: false
+    credibility_base_score: 0
