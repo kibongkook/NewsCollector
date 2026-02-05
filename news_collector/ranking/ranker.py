@@ -202,6 +202,10 @@ class Ranker:
         "올림픽": ["olympics", "메달", "금메달", "올림픽"],
         "물가": ["inflation", "소비자물가", "가격", "인상"],
         "인구": ["population", "출생률", "고령화", "인구감소"],
+        "아이돌": ["idol", "kpop", "k-pop", "연예인", "가수", "컴백"],
+        "연예": ["entertainment", "연예인", "스타", "셀럽", "방송"],
+        "복지": ["welfare", "복지정책", "사회보장", "지원"],
+        "환율": ["exchange rate", "달러", "원화", "외환"],
     }
 
     def _calculate_relevance(
