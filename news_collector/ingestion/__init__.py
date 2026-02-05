@@ -1,0 +1,1 @@
+from news_collector.ingestion.ingestion_engine import IngestionEngine

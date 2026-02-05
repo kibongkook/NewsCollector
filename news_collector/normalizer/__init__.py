@@ -1,0 +1,1 @@
+from news_collector.normalizer.news_normalizer import NewsNormalizer

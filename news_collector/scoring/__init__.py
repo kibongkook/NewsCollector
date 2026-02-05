@@ -1,0 +1,2 @@
+from news_collector.scoring.credibility_scorer import CredibilityScorer
+from news_collector.scoring.popularity_scorer import PopularityScorer

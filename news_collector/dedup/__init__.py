@@ -1,0 +1,1 @@
+from news_collector.dedup.dedup_engine import DeduplicationEngine

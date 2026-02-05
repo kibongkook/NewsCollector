@@ -1,0 +1,1 @@
+from news_collector.integrity.integrity_checker import ContentIntegrityChecker
