@@ -50,19 +50,27 @@ def search_google_news_rss(
 ) -> List[RawNewsRecord]:
     """
     Google News RSS를 통해 특정 날짜의 뉴스 검색.
-
-    Args:
-        query: 검색어 (빈 문자열이면 전체 뉴스)
-        date_str: 날짜 (YYYY-MM-DD)
-        lang: 언어 코드
-        country: 국가 코드
-        max_results: 최대 결과 수
+    결과 0건이면 날짜 범위를 +-3일로 넓혀 재시도.
     """
-    # 날짜 범위 설정 (하루) - datetime으로 정확한 전후일 계산
+    records = _search_rss_inner(query, date_str, lang, country, max_results, date_margin=1)
+    if not records:
+        records = _search_rss_inner(query, date_str, lang, country, max_results, date_margin=3)
+    return records
+
+
+def _search_rss_inner(
+    query: str,
+    date_str: str,
+    lang: str = "ko",
+    country: str = "KR",
+    max_results: int = 30,
+    date_margin: int = 1,
+) -> List[RawNewsRecord]:
+    """Google News RSS 수집 내부 함수."""
     from datetime import timedelta
     target_date = datetime.strptime(date_str, "%Y-%m-%d")
-    before_date = target_date - timedelta(days=1)
-    after_date = target_date + timedelta(days=1)
+    before_date = target_date - timedelta(days=date_margin)
+    after_date = target_date + timedelta(days=date_margin)
 
     # Google News RSS 검색 URL
     search_query = query if query else "뉴스"
@@ -138,6 +146,7 @@ def run_pipeline(
     records: List[RawNewsRecord],
     preset: str = "quality",
     limit: int = 3,
+    keywords: Optional[List[str]] = None,
 ) -> List[NewsWithScores]:
     """전체 파이프라인 실행: 정규화 → 중복 제거 → 랭킹."""
     if not records:
@@ -155,7 +164,7 @@ def run_pipeline(
 
     # Module 9: 랭킹 (Module 6/7/8 포함)
     ranker = Ranker()
-    results = ranker.rank(unique, preset=preset, limit=limit)
+    results = ranker.rank(unique, preset=preset, limit=limit, keywords=keywords)
     logger.info("랭킹: %d건 (프리셋: %s)", len(results), preset)
 
     return results
@@ -241,7 +250,8 @@ def main():
         print(f"    수집: {len(records)}건")
 
         # 파이프라인 실행
-        results = run_pipeline(records, preset=q["preset"], limit=q["limit"])
+        query_keywords = q["query"].split() if q["query"] else None
+        results = run_pipeline(records, preset=q["preset"], limit=q["limit"], keywords=query_keywords)
 
         # 결과 출력
         print_results(results, q["title"])

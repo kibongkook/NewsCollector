@@ -58,10 +58,11 @@ class PopularityScorer:
             + norm_comments * self._comment_weight
         )
 
-        # 인기도 메트릭이 전혀 없으면 신선도 기반 추정
+        # 인기도 메트릭이 전혀 없으면 신선도 기반 추정 (최소 0.3 보장)
         has_metrics = any([news.view_count, news.share_count, news.comment_count])
         if not has_metrics:
-            popularity = self._freshness_score(news, all_news)
+            freshness = self._freshness_score(news, all_news)
+            popularity = max(0.3, freshness)
 
         trending = self._trending_velocity(news)
 

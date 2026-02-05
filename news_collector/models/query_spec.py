@@ -87,7 +87,7 @@ class QuerySpec:
         if self.offset < 0:
             errors.append(f"offset은 0 이상이어야 합니다: {self.offset}")
 
-        allowed_pop = {"trending", "popular", "latest", "quality"}
+        allowed_pop = {"trending", "popular", "latest", "quality", "credible"}
         if self.popularity_type not in allowed_pop:
             errors.append(
                 f"유효하지 않은 popularity_type: {self.popularity_type} "

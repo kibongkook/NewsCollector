@@ -85,7 +85,7 @@ class CredibilityScorer:
         if not all_news:
             return 0.0
 
-        title_words = set(news.title.lower().split())
+        title_words = set((news.title or "").lower().split())
         if len(title_words) < 3:
             return 0.0
 
@@ -96,7 +96,10 @@ class CredibilityScorer:
             other_words = set(other.title.lower().split())
             if not other_words:
                 continue
-            sim = len(title_words & other_words) / len(title_words | other_words)
+            union = len(title_words | other_words)
+            if union == 0:
+                continue
+            sim = len(title_words & other_words) / union
             if sim >= 0.5:
                 cross_count += 1
 
@@ -117,9 +120,18 @@ class CredibilityScorer:
             if re.search(pattern, text):
                 match_count += 1
 
-        # 본문 길이 보너스
-        length_bonus = min(0.2, len(text) / 5000)
-        score = min(1.0, (match_count / len(EVIDENCE_PATTERNS)) + length_bonus)
+        # 본문 길이 보너스 (짧은 텍스트에 더 관대)
+        text_len = len(text)
+        length_bonus = min(0.3, text_len / 3000)
+
+        # 증거 패턴 비율 (있는 패턴 수 기반, 적은 패턴에도 관대)
+        pattern_score = min(1.0, match_count * 0.15)
+
+        # 소스 티어 기반 기본 품질 (신뢰할 수 있는 소스는 기본 품질 높음)
+        tier_base = {"whitelist": 0.3, "tier1": 0.25, "tier2": 0.15, "tier3": 0.05}
+        base = tier_base.get(news.source_tier, 0.1)
+
+        score = min(1.0, base + pattern_score + length_bonus)
         return score
 
     def _sensationalism_penalty(self, news: NormalizedNews) -> float:

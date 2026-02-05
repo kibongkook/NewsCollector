@@ -71,6 +71,9 @@ class NewsWithScores(NormalizedNews):
     popularity_score: float = 0.0
     trending_velocity: float = 0.0
 
+    # Relevance
+    relevance_score: float = 0.0
+
     # Module 9: Final
     final_score: float = 0.0
     rank_position: int = 0

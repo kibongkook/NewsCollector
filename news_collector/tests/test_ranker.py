@@ -55,7 +55,7 @@ class TestCalculateFinalScore:
     def test_equal_weights(self):
         news = _make_scored(
             popularity_score=1.0,
-            integrity_score=1.0,
+            relevance_score=1.0,
             quality_score=1.0,
             credibility_score=1.0,
         )
@@ -65,7 +65,7 @@ class TestCalculateFinalScore:
     def test_zero_scores(self):
         news = _make_scored(
             popularity_score=0.0,
-            integrity_score=0.0,
+            relevance_score=0.0,
             quality_score=0.0,
             credibility_score=0.0,
         )
