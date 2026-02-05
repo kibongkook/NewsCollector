@@ -1,0 +1,93 @@
+# NewsCollector 메인 설정
+
+# ===== Module 1: Request Parser 기본값 =====
+defaults:
+  locale: "ko_KR"
+  timezone: "Asia/Seoul"
+  country: "KR"
+  language: "ko"
+  market: "ko_KR"
+
+  # 쿼리 기본값
+  popularity_type: "latest"
+  group_by: "none"
+  limit: 20
+  offset: 0
+  verified_sources_only: false
+  diversity: true
+  date_range_days: 7
+
+# ===== 입력 검증 제약 =====
+validation:
+  max_limit: 100
+  min_limit: 1
+  max_keywords: 10
+  max_categories: 5
+  allowed_popularity_types:
+    - "trending"
+    - "popular"
+    - "latest"
+    - "quality"
+  allowed_group_by:
+    - "day"
+    - "source"
+    - "none"
+  max_date_range_days: 365
+
+# ===== 스코어링 (후속 모듈용) =====
+scoring:
+  final_weights:
+    popularity: 0.25
+    relevance: 0.25
+    quality: 0.25
+    credibility: 0.25
+  integrity_threshold: 0.5
+  credibility_threshold: 0.6
+  source_diversity:
+    max_same_source_in_top_n: 3
+    enforce: true
+
+# ===== 랭킹 프리셋 =====
+ranking_presets:
+  quality:
+    name: "품질순"
+    weights:
+      popularity: 0.15
+      relevance: 0.30
+      quality: 0.40
+      credibility: 0.15
+  trending:
+    name: "트렌딩"
+    weights:
+      popularity: 0.50
+      relevance: 0.10
+      quality: 0.20
+      credibility: 0.20
+  credible:
+    name: "신뢰도순"
+    weights:
+      popularity: 0.10
+      relevance: 0.20
+      quality: 0.20
+      credibility: 0.50
+  latest:
+    name: "최신순"
+    weights:
+      popularity: 0.05
+      relevance: 0.10
+      quality: 0.15
+      credibility: 0.20
+    sort_by: "published_at"
+
+# ===== 캐시 =====
+cache:
+  enabled: true
+  ttl_minutes: 60
+  max_size: 10000
+
+# ===== 데이터베이스 =====
+database:
+  type: "sqlite"
+  path: "./news.db"
+  backup_enabled: true
+  backup_interval_hours: 6

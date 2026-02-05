@@ -1,0 +1,1 @@
+from news_collector.parsers.request_parser import RequestParser

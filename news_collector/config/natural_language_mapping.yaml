@@ -1,0 +1,108 @@
+# 자연어 파싱 규칙 - Module 1 (Request Parser)
+
+# ===== 의도 패턴 (우선순위: 선언 순서) =====
+intent_patterns:
+  trending:
+    keywords: ["트렌딩", "화제", "핫", "뜨는", "핫한", "화제의", "급상승"]
+    result:
+      popularity_type: "trending"
+      group_by: "day"
+
+  popular:
+    keywords: ["많이본", "많이 본", "조회", "공유", "인기", "인기있는", "가장 많이"]
+    result:
+      popularity_type: "popular"
+
+  quality:
+    keywords: ["좋은", "신뢰", "품질", "양질", "질 높은"]
+    result:
+      popularity_type: "quality"
+
+  latest:
+    keywords: ["최신", "최근", "새로운"]
+    result:
+      popularity_type: "latest"
+
+# ===== 상대 날짜 패턴 =====
+date_patterns:
+  relative:
+    "오늘":
+      offset_days: 0
+      range_days: 1
+    "어제":
+      offset_days: -1
+      range_days: 1
+    "그저께":
+      offset_days: -2
+      range_days: 1
+    "이번 주":
+      offset_days: -7
+      range_days: 7
+    "지난 주":
+      offset_days: -14
+      range_days: 7
+    "이번 달":
+      offset_days: -30
+      range_days: 30
+
+  # 정규식 기반 상대 날짜
+  relative_regex:
+    - pattern: "지난\\s*(\\d+)\\s*일"
+      type: "days_ago"
+    - pattern: "지난\\s*(\\d+)\\s*주일?"
+      type: "weeks_ago"
+    - pattern: "최근\\s*(\\d+)\\s*일"
+      type: "days_ago"
+    - pattern: "최근\\s*(\\d+)\\s*주일?"
+      type: "weeks_ago"
+
+# ===== 절대 날짜 정규식 =====
+date_regex:
+  # "M월 D일~D일" (같은 달 범위)
+  month_day_range: "(\\d{1,2})월\\s*(\\d{1,2})일\\s*[~\\-부]\\s*(\\d{1,2})일"
+  # "YYYY년 M월 D일" 또는 "M월 D일"
+  year_month_day: "(?:(\\d{4})년\\s*)?(\\d{1,2})월\\s*(\\d{1,2})일"
+  # ISO: "YYYY-MM-DD~YYYY-MM-DD"
+  iso_range: "(\\d{4}-\\d{2}-\\d{2})\\s*[~\\-]\\s*(\\d{4}-\\d{2}-\\d{2})"
+
+# ===== 카테고리 키워드 =====
+category_keywords:
+  정치: ["정치", "국회", "대통령", "정당", "선거", "정부"]
+  경제: ["경제", "기업", "주식", "금융", "시장", "재정", "증시"]
+  사회: ["사회", "범죄", "교육", "복지", "환경"]
+  IT: ["IT", "기술", "소프트웨어", "AI", "인공지능", "테크", "디지털"]
+  과학: ["과학", "연구", "우주", "생명", "바이오"]
+  문화: ["문화", "예술", "영화", "음악", "공연"]
+  스포츠: ["스포츠", "축구", "야구", "농구", "올림픽"]
+  국제: ["국제", "세계", "미국", "중국", "일본", "외교"]
+  연예: ["연예", "아이돌", "드라마", "방송"]
+
+# ===== 결과 수 추출 =====
+limit_patterns:
+  - pattern: "[Tt]op\\s*(\\d+)"
+    group: 1
+  - pattern: "(\\d+)\\s*[개건]"
+    group: 1
+
+# ===== 키워드 추출 =====
+keyword_patterns:
+  - pattern: "([가-힣A-Za-z0-9]+)\\s*관련"
+    group: 1
+  - pattern: "([가-힣A-Za-z0-9]+)에\\s*대한"
+    group: 1
+
+# ===== 제외 키워드 =====
+exclude_patterns:
+  - pattern: "([가-힣A-Za-z0-9]+)\\s*제외"
+    group: 1
+  - pattern: "([가-힣A-Za-z0-9]+)\\s*빼고"
+    group: 1
+
+# ===== 옵션 키워드 =====
+option_keywords:
+  verified_sources_only:
+    keywords: ["검증된 소스", "신뢰할 수 있는", "공식", "대형 언론"]
+    value: true
+  diversity:
+    keywords: ["다양한 소스", "다양성", "여러 소스"]
+    value: true

@@ -1,0 +1,186 @@
+# NewsCollector (완성 기획서 v1.1) - Cursor Rules
+
+## 프로젝트 개요
+양질의 뉴스만 수집하는 고품질 뉴스 수집 시스템
+- 사용자 요청(날짜/기간/카테고리/키워드/인기)을 정확히 이해
+- 다중 소스(API/RSS/웹크롤)에서 병렬 수집
+- 9개 모듈을 거쳐 품질 검증
+- 최종 점수 기반 정렬 및 다양성 보장
+
+## 핵심 아키텍처 (9개 모듈)
+1. **Request Parser**: 자연어/파라미터 → QuerySpec
+2. **Source Registry**: 소스 메타데이터 중앙 관리
+3. **Ingestion**: 다중 소스 병렬 수집 (API/RSS/크롤)
+4. **Parsing & Normalization**: 공통 필드 표준화
+5. **Dedup & Clustering**: 중복 제거, 이슈 묶기
+6. **Content Integrity QA** ⭐: 제목-본문 일치도, 오염 탐지, 스팸 감지
+7. **Credibility & Quality Scoring** ⭐: 신뢰도, 증거도, 선정성 감점, 크로스 검증
+8. **Popularity Engine**: 조회/공유/댓글 기반 인기도
+9. **Ranker & Policy Filter**: 최종 점수 계산, 정책 필터, 다양성 보장
+
+## 핵심 원칙
+
+### 🔧 설정 기반 운영 (No Hardcoding)
+- 모든 설정값은 config.yaml / sources_registry.yaml에서 읽기
+- 소스 추가/제거, 필터 임계값, 점수 가중치 모두 설정 파일에서 관리
+- 코드 수정 없이 설정만으로 동작 조정 가능
+- 예: 신뢰도 점수 변경 → config.yaml의 tier_weights 수정
+
+### 🤖 AI 최소화 (Rule-Based)
+- NLP 미사용: Jaccard 유사도, 단어 기반 일치도로 충분
+- 감정 분석/텍스트 분류 금지 (신경망 불필요)
+- 규칙 기반 필터: 패턴 매칭, 통계 계산, 키워드 검사
+- 간단한 휴리스틱: 제목 엔티티 추출, 문단 유사도, Lexical Density
+
+### 🧩 모듈식 설계
+- 각 모듈은 독립적으로 테스트 가능
+- 명확한 입출력 (dataclass로 정의)
+- 느슨한 결합: 모듈 간 설정으로 연결
+- 예: Module 6 → IntegrityScore 산출 → Module 7에서 사용
+
+### 📊 확장 용이
+- 새로운 소스: Source Registry + Connector 추가만으로 완료
+- 새로운 필터: FilterEngine에 메서드 추가 (config에 설정)
+- 새로운 점수 모델: ScoreCalculator에 메서드 + config weights 추가
+
+## 데이터 흐름
+
+```
+사용자 입력
+  ↓
+Module 1: 요청 파싱 → QuerySpec
+  ↓
+Module 2: 소스 선택
+  ↓
+Module 3: 병렬 수집 [async]
+  ↓
+Module 4: 정규화 (공통 필드)
+  ↓
+Module 5: 중복제거/클러스터링
+  ↓
+Module 6: 무결성 검증 (IntegrityScore)
+  ↓
+Module 7: 신뢰도/품질 (CredibilityScore, QualityScore)
+  ↓
+Module 8: 인기도 (PopularityScore)
+  ↓
+Module 9: 정책 필터 + 최종 점수 + 정렬
+  ↓
+사용자에게 반환 (JSON/CLI)
+```
+
+## 핵심 데이터 구조
+
+### NewsWithScores (최종 뉴스 객체)
+```python
+- 기본 정보: id, title, body, source_id, published_at
+- 점수들:
+  - integrity_score (제목-본문 일치도, 오염도, 스팸도)
+  - credibility_score (출처 신뢰도 + 크로스 검증)
+  - quality_score (증거도 - 선정성)
+  - popularity_score (조회/공유/댓글 정규화)
+  - final_score (0~100, 가중 평균)
+```
+
+### config.yaml 구조
+```yaml
+# 신뢰도 Tier 정의
+tier_definitions:
+  whitelist: base=95, weight=1.0
+  tier1: base=88, weight=0.95
+  tier2: base=70, weight=0.80
+  tier3: base=45, weight=0.60
+  blacklist: base=0, weight=0.0
+
+# 최종 점수 가중치 (설정 가능)
+scoring:
+  final_weights:
+    popularity: 0.25
+    relevance: 0.25 (IntegrityScore)
+    quality: 0.25
+    credibility: 0.25
+
+# Ranking Presets
+ranking_presets:
+  quality, trending, credible, latest (가중치 커스텀)
+
+# 정책 필터
+integrity_threshold: 0.5 (미만 제외)
+credibility_threshold: 0.6 (미만 "의심" 분류)
+max_same_source_in_top_n: 3 (다양성)
+```
+
+## 구현 계획 (7 Phase, 14주)
+
+| Phase | 기간 | 모듈 | 산출물 |
+|-------|------|------|--------|
+| 1 | 1-2주 | 기초 | 데이터 모델, DB, 설정 시스템 |
+| 2 | 3-4주 | 3, 4 | Ingestion, Parsing, Validation |
+| 3 | 5-6주 | 5 | Dedup & Clustering |
+| 4 | 7-8주 | 6 | Content Integrity QA |
+| 5 | 9-10주 | 7 | Credibility & Quality Scorer |
+| 6 | 11-12주 | 8, 9 | Popularity + Ranker |
+| 7 | 13-14주 | API/CLI | 인터페이스 + 테스트 |
+
+## 코딩 스타일
+
+### 필수 규칙
+- Python 3.9+, type hints 필수 (모든 함수)
+- Dataclass 사용 (Pydantic 보다 간단함)
+- 비동기 처리: async/await (수집 병렬화)
+- 설정 로드: yaml / json 지원
+- 로깅: Python logging (print 금지)
+
+### 패턴
+```python
+# ❌ 나쁜 예
+if source == "naver":
+    credibility = 88
+elif source == "google":
+    credibility = 90
+
+# ✅ 좋은 예
+source = source_registry.get(source_id)
+credibility = source.credibility_base_score
+```
+
+### 모듈 구조
+```python
+class ModuleClassName:
+    """모듈 설명"""
+    
+    def __init__(self, config: Config):
+        self.config = config
+    
+    def process(self, input_data: InputDataClass) -> OutputDataClass:
+        """공개 인터페이스"""
+        pass
+    
+    def _helper_method(self) -> Any:
+        """내부 로직"""
+        pass
+```
+
+## 테스트
+
+- pytest 사용 (커버리지 80%+)
+- 각 모듈별 unit test
+- E2E 테스트: 전체 파이프라인
+- Mock: 외부 API, DB는 mock 사용
+
+## 배포
+
+- Docker 지원
+- config 환경변수 오버라이드 지원
+- 로그: 파일 + 콘솔 (레벨 설정)
+- 에러: 구조화된 에러 처리, 재시도 로직
+
+## 주의사항
+
+⚠️ Module 6 (Content Integrity)과 Module 7 (Credibility)이 핵심
+→ 이들 점수가 낮으면 최종 점수도 낮음
+→ 스팸/선정성 필터링이 효과적
+
+⚠️ 중복 제거 (Module 5)는 정확해야 함
+→ False positive (진짜 뉴스 제거) 최소화
+→ 클러스터링은 신중하게
