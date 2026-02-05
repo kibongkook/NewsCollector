@@ -305,12 +305,21 @@ class QualityValidator:
                 "detail": f"평균 점수 {metrics['avg_score']}점 (개선 필요)",
             })
 
-        # 4. 관련성 검증 - 제목에 쿼리 키워드 포함 여부
+        # 4. 관련성 검증 - 제목에 쿼리 키워드 또는 동의어 포함 여부
+        from news_collector.ranking.ranker import Ranker
         query_keywords = set(query["query"].lower().split())
+        # 동의어 확장
+        expanded_keywords = set(query_keywords)
+        for kw in query_keywords:
+            synonyms = Ranker.KEYWORD_SYNONYMS.get(kw, [])
+            expanded_keywords.update(s.lower() for s in synonyms)
+
         relevance_hits = 0
         for r in results:
             title_lower = r.title.lower()
-            if any(kw in title_lower for kw in query_keywords):
+            body_lower = (r.body or "").lower()
+            text = title_lower + " " + body_lower
+            if any(kw in text for kw in expanded_keywords):
                 relevance_hits += 1
         metrics["relevance_ratio"] = round(relevance_hits / len(results), 2) if results else 0
 
