@@ -109,6 +109,22 @@ class TestFreshnessScore:
         score = self.scorer._freshness_score(news)
         assert score > 0.8
 
+    def test_historical_batch_relative_freshness(self):
+        """과거 날짜 배치에서 상대적 신선도 보정."""
+        # 6개월 전 기사들 (배치 내 최신이 7일+ 전이면 배치 기준 적용)
+        old_date = _now() - timedelta(days=180)
+        older_date = old_date - timedelta(hours=12)
+        news1 = _make_news(id="1", published_at=old_date, url="https://a.com/1")
+        news2 = _make_news(id="2", published_at=older_date, url="https://b.com/2")
+        all_news = [news1, news2]
+
+        # all_news 없이 (절대 기준) → 6개월 전이라 거의 0
+        score_absolute = self.scorer._freshness_score(news1)
+        # all_news 포함 (상대 기준) → 배치 내 최신 대비 0시간이라 거의 1.0
+        score_relative = self.scorer._freshness_score(news1, all_news)
+
+        assert score_relative > score_absolute
+
 
 # ═══════════════════════════════════════════════════════════
 # 트렌딩 속도 테스트

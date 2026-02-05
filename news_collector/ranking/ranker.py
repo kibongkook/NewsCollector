@@ -1,5 +1,6 @@
 """Module 9: Ranker & Policy Filter - 최종 점수 계산 및 랭킹"""
 
+from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
 from news_collector.models.news import NormalizedNews, NewsWithScores
@@ -91,8 +92,12 @@ class Ranker:
         filtered = self._apply_policy_filter(scored)
 
         # 4. 정렬
+        _epoch = datetime(1970, 1, 1, tzinfo=timezone.utc)
         if preset == "latest":
-            filtered.sort(key=lambda n: n.published_at or 0, reverse=True)
+            filtered.sort(
+                key=lambda n: n.published_at if n.published_at else _epoch,
+                reverse=True,
+            )
         else:
             filtered.sort(key=lambda n: n.final_score, reverse=True)
 
@@ -179,10 +184,15 @@ class Ranker:
         source_count: Dict[str, int] = {}
         diverse: List[NewsWithScores] = []
 
+        # source_id가 모두 같으면(예: google_news) source_name 기반으로 전환
+        unique_ids = {n.source_id for n in news_list}
+        use_name = len(unique_ids) == 1 and len(news_list) > 1
+
         for news in news_list:
-            count = source_count.get(news.source_id, 0)
+            key = news.source_name if use_name else news.source_id
+            count = source_count.get(key, 0)
             if count < self._max_same_source:
                 diverse.append(news)
-                source_count[news.source_id] = count + 1
+                source_count[key] = count + 1
 
         return diverse

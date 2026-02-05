@@ -70,6 +70,11 @@ class TestCleanHtml:
     def test_decode_entities(self):
         result = self.normalizer._clean_html("Hello&amp;World")
         assert "&amp;" not in result
+        assert "Hello&World" == result
+
+    def test_decode_entities_lt_gt(self):
+        result = self.normalizer._clean_html("a &lt; b &gt; c")
+        assert result == "a < b > c"
 
     def test_empty_string(self):
         assert self.normalizer._clean_html("") == ""

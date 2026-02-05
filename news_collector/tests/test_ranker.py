@@ -163,6 +163,19 @@ class TestDiversity:
         result = self.ranker._ensure_diversity(news_list)
         assert len(result) == 4  # src_a 3개 + src_b 1개
 
+    def test_same_source_id_fallback_to_name(self):
+        """source_id가 모두 같으면 source_name으로 다양성 판단."""
+        news_list = [
+            _make_scored(id="1", source_id="google_news", source_name="BBC"),
+            _make_scored(id="2", source_id="google_news", source_name="BBC"),
+            _make_scored(id="3", source_id="google_news", source_name="BBC"),
+            _make_scored(id="4", source_id="google_news", source_name="BBC"),  # 4번째 → 제외
+            _make_scored(id="5", source_id="google_news", source_name="CNN"),
+            _make_scored(id="6", source_id="google_news", source_name="Reuters"),
+        ]
+        result = self.ranker._ensure_diversity(news_list)
+        assert len(result) == 5  # BBC 3개 + CNN 1개 + Reuters 1개
+
 
 # ═══════════════════════════════════════════════════════════
 # rank() 전체 파이프라인 테스트
@@ -221,6 +234,15 @@ class TestRankPipeline:
         results = self.ranker.rank(news_list, preset="quality")
         if len(results) >= 2:
             assert results[0].final_score >= results[1].final_score
+
+    def test_latest_preset_no_crash_on_none_published_at(self):
+        """latest 프리셋에서 published_at=None이어도 크래시 없이 정렬."""
+        news_list = [
+            _make_news(id="1", source_id="src_a", url="https://a.com/1"),
+            NormalizedNews(id="2", title="No date news", body="Body text", source_id="src_b", url="https://b.com/2"),
+        ]
+        results = self.ranker.rank(news_list, preset="latest")
+        assert len(results) > 0
 
 
 # ═══════════════════════════════════════════════════════════

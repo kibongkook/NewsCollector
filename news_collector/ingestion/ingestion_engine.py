@@ -58,8 +58,13 @@ class IngestionEngine:
 
         # 비동기 수집 실행
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
+            # Python 3.10+에서도 안전한 이벤트 루프 감지
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
                 # 이미 이벤트 루프가 실행 중이면 (Jupyter 등)
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as pool:
@@ -67,7 +72,7 @@ class IngestionEngine:
                         asyncio.run, self._collect_all(sources, query_spec)
                     ).result()
             else:
-                results = loop.run_until_complete(self._collect_all(sources, query_spec))
+                results = asyncio.run(self._collect_all(sources, query_spec))
         except RuntimeError:
             results = asyncio.run(self._collect_all(sources, query_spec))
 

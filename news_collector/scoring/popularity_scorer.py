@@ -61,7 +61,7 @@ class PopularityScorer:
         # 인기도 메트릭이 전혀 없으면 신선도 기반 추정
         has_metrics = any([news.view_count, news.share_count, news.comment_count])
         if not has_metrics:
-            popularity = self._freshness_score(news)
+            popularity = self._freshness_score(news, all_news)
 
         trending = self._trending_velocity(news)
 
@@ -70,17 +70,38 @@ class PopularityScorer:
             "trending_velocity": round(trending, 3),
         }
 
-    def _freshness_score(self, news: NormalizedNews) -> float:
-        """발행일 기반 신선도 점수 (0~1, 반감기 적용)."""
+    def _freshness_score(
+        self, news: NormalizedNews, all_news: Optional[List[NormalizedNews]] = None,
+    ) -> float:
+        """발행일 기반 신선도 점수 (0~1, 반감기 적용).
+
+        과거 날짜 검색 시 동일 배치 내 상대적 신선도로 보정:
+        - 배치 내 가장 최근 기사가 현재 시각 대비 7일 이상이면
+          "현재시각" 대신 배치 내 최신 발행일 기준으로 신선도 계산.
+        """
         if not news.published_at:
             return 0.3
 
-        now = datetime.now(timezone.utc)
         pub = news.published_at
         if pub.tzinfo is None:
             pub = pub.replace(tzinfo=timezone.utc)
 
-        hours_ago = max(0, (now - pub).total_seconds() / 3600)
+        # 기준 시각 결정: 배치 내 최신 기사가 7일 이상 전이면 배치 기준 사용
+        reference = datetime.now(timezone.utc)
+        if all_news:
+            pub_dates = []
+            for n in all_news:
+                if n.published_at:
+                    p = n.published_at
+                    if p.tzinfo is None:
+                        p = p.replace(tzinfo=timezone.utc)
+                    pub_dates.append(p)
+            if pub_dates:
+                latest_in_batch = max(pub_dates)
+                if (reference - latest_in_batch).days >= 7:
+                    reference = latest_in_batch
+
+        hours_ago = max(0, (reference - pub).total_seconds() / 3600)
         # 지수 감쇠
         return 0.5 ** (hours_ago / self._half_life)
 

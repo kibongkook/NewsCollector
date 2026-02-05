@@ -1,5 +1,6 @@
 """Module 4: Parsing & Normalization - 뉴스 정규화"""
 
+import html as html_module
 import re
 import uuid
 from datetime import datetime, timezone
@@ -59,7 +60,7 @@ class NewsNormalizer:
         if isinstance(tags, str):
             tags = [t.strip() for t in tags.split(",") if t.strip()]
 
-        source_tier = source.tier if source else "tier2"
+        source_tier = source.tier if source else data.get("source_tier", "tier2")
         source_name = source.name if source else raw.source_name
         language = (source.default_locale[:2] if source else raw.page_language) or "ko"
 
@@ -112,8 +113,8 @@ class NewsNormalizer:
         text = re.sub(r"<script[^>]*>.*?</script>", "", html, flags=re.DOTALL | re.IGNORECASE)
         text = re.sub(r"<style[^>]*>.*?</style>", "", text, flags=re.DOTALL | re.IGNORECASE)
         text = re.sub(r"<[^>]+>", "", text)
-        text = re.sub(r"&[a-zA-Z]+;", " ", text)
-        text = re.sub(r"&#\d+;", " ", text)
+        # HTML entity 올바르게 디코딩 (&amp; → &, &lt; → < 등)
+        text = html_module.unescape(text)
         lines = [line.strip() for line in text.split("\n")]
         lines = [line for line in lines if line]
         return "\n".join(lines)
