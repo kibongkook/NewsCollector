@@ -127,12 +127,32 @@ def fetch_google_news_rss(
     max_results: int = 30,
     retry_wider: bool = True,
 ) -> List[RawNewsRecord]:
-    """Google News RSS 수집. 결과 0건이면 날짜 범위를 넓혀 재시도."""
+    """Google News RSS 수집. 결과 부족 시 전략적 재시도.
+
+    1차: 전체 키워드로 검색
+    2차 (0건): 날짜 범위 +-3일로 넓혀 재시도
+    3차 (여전히 부족 + 복합 키워드): 개별 키워드 검색 후 병합
+    """
     records = _fetch_rss_inner(query, date_str, lang, country, max_results)
     if not records and retry_wider:
-        # 날짜 범위를 +-3일로 넓혀 재시도
         records = _fetch_rss_inner(query, date_str, lang, country, max_results, date_margin=3)
-    return records
+
+    # 복합 키워드인데 결과가 부족하면 개별 키워드 검색 후 병합
+    keywords = query.split()
+    min_threshold = 5
+    if len(keywords) >= 2 and len(records) < min_threshold and retry_wider:
+        seen_urls = {r.url for r in records}
+        for kw in keywords:
+            extra = _fetch_rss_inner(kw, date_str, lang, country, max_results)
+            for r in extra:
+                if r.url not in seen_urls:
+                    records.append(r)
+                    seen_urls.add(r.url)
+            if len(records) >= max_results:
+                break
+            time.sleep(0.5)  # rate limit 방지
+
+    return records[:max_results]
 
 
 def _fetch_rss_inner(
@@ -257,6 +277,7 @@ class QualityValidator:
         """
         issues = []
         metrics = {}
+        preset = query["preset"]
 
         # 1. 수집 성공률
         metrics["raw_count"] = len(raw_records)
@@ -292,13 +313,17 @@ class QualityValidator:
         metrics["max_score"] = round(max(scores), 1)
         metrics["score_range"] = round(max(scores) - min(scores), 1)
 
-        if metrics["avg_score"] < 30:
+        # latest 프리셋은 시간순 정렬이므로 점수 기준을 완화
+        score_threshold_low = 20 if preset == "latest" else 30
+        score_threshold_med = 35 if preset == "latest" else 50
+
+        if metrics["avg_score"] < score_threshold_low:
             issues.append({
                 "severity": "HIGH",
                 "check": "low_avg_score",
                 "detail": f"평균 점수 {metrics['avg_score']}점으로 매우 낮음 (품질 문제)",
             })
-        elif metrics["avg_score"] < 50:
+        elif metrics["avg_score"] < score_threshold_med:
             issues.append({
                 "severity": "MEDIUM",
                 "check": "mediocre_avg_score",
@@ -365,7 +390,6 @@ class QualityValidator:
             })
 
         # 7. 프리셋별 특성 검증
-        preset = query["preset"]
         if preset == "trending" and results:
             # trending은 인기도 점수가 높아야 함
             pop_scores = [r.popularity_score for r in results]
