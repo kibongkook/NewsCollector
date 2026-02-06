@@ -6,6 +6,8 @@ from typing import Any, Dict, List, Optional
 from news_collector.ingestion.base_connector import BaseConnector
 from news_collector.ingestion.api_connector import APIConnector
 from news_collector.ingestion.rss_connector import RSSConnector
+from news_collector.ingestion.google_news_connector import GoogleNewsConnector
+from news_collector.ingestion.naver_news_connector import NaverNewsConnector
 from news_collector.models.query_spec import QuerySpec
 from news_collector.models.raw_news import RawNewsRecord
 from news_collector.models.source import NewsSource
@@ -113,10 +115,49 @@ class IngestionEngine:
     ) -> List[RawNewsRecord]:
         """단일 소스에서 수집."""
         keywords = query_spec.keywords or []
+
+        # Google News: 날짜 범위 지원
+        if isinstance(connector, GoogleNewsConnector):
+            return await connector.fetch(
+                keywords=keywords,
+                limit=query_spec.limit,
+                date_from=query_spec.date_from,
+                date_to=query_spec.date_to,
+            )
+
+        # Naver News API: 날짜 범위 지원 (최신 뉴스만)
+        if isinstance(connector, NaverNewsConnector):
+            return await connector.fetch(
+                keywords=keywords,
+                limit=query_spec.limit,
+                date_from=query_spec.date_from,
+                date_to=query_spec.date_to,
+            )
+
         return await connector.fetch(keywords=keywords, limit=query_spec.limit)
 
     def _create_connector(self, source: NewsSource) -> Optional[BaseConnector]:
         """소스 타입에 맞는 커넥터 생성."""
+        import os
+
+        # Google News는 전용 커넥터 사용 (날짜 검색 지원)
+        if source.id == "google_news":
+            return GoogleNewsConnector(source)
+
+        # Naver News API는 전용 커넥터 사용
+        if source.id == "naver_news":
+            client_id = os.environ.get("NAVER_CLIENT_ID", "")
+            client_secret = os.environ.get("NAVER_CLIENT_SECRET", "")
+            if client_id and client_secret:
+                return NaverNewsConnector(
+                    source=source,
+                    client_id=client_id,
+                    client_secret=client_secret,
+                )
+            else:
+                logger.warning("Naver API 인증 정보 없음. 환경변수 설정 필요.")
+                return None
+
         if source.ingestion_type == "rss":
             return RSSConnector(source)
         elif source.ingestion_type == "api":

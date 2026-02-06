@@ -28,6 +28,18 @@ CATEGORY_MAPPING: Dict[str, List[str]] = {
     "연예": ["entertainment", "연예", "아이돌", "드라마"],
 }
 
+# 동영상/방송 뉴스 제외 패턴
+VIDEO_NEWS_PATTERNS = [
+    r"뉴스와이드\s*\d{1,2}월\s*\d{1,2}일",  # 뉴스와이드 01월 04일
+    r"뉴스데스크\s*\d{1,2}월\s*\d{1,2}일",
+    r"뉴스룸\s*\d{1,2}월\s*\d{1,2}일",
+    r"뉴스특보\s*\d{1,2}월\s*\d{1,2}일",
+    r"\d{1,2}:\d{2}\s*~\s*\d{1,2}:\d{2}",  # 11:50 ~ 13:44 시간대 패턴
+    r"^\[.*생중계.*\]",  # [생중계]
+    r"^\[.*LIVE.*\]",  # [LIVE]
+    r"^\[.*라이브.*\]",  # [라이브]
+]
+
 
 class NewsNormalizer:
     """
@@ -92,19 +104,62 @@ class NewsNormalizer:
         self,
         records: List[RawNewsRecord],
         source_map: Optional[Dict[str, NewsSource]] = None,
+        filter_video_news: bool = True,
+        target_date: Optional[datetime] = None,
+        date_tolerance_days: int = 1,
     ) -> List[NormalizedNews]:
-        """배치 정규화."""
+        """배치 정규화.
+
+        Args:
+            records: 원본 뉴스 레코드 리스트
+            source_map: 소스 ID → NewsSource 매핑
+            filter_video_news: True면 동영상/방송 뉴스 제외
+            target_date: 지정 시 해당 날짜 ± tolerance 범위만 포함
+            date_tolerance_days: 날짜 허용 범위 (일)
+        """
         source_map = source_map or {}
         results = []
+        filtered_video = 0
+        filtered_date = 0
+
         for raw in records:
             try:
+                # 동영상 뉴스 필터링
+                if filter_video_news and self._is_video_news(raw):
+                    filtered_video += 1
+                    continue
+
                 source = source_map.get(raw.source_id)
                 normalized = self.normalize(raw, source)
+
+                # 날짜 필터링
+                if target_date and normalized.published_at:
+                    diff_days = abs((normalized.published_at.replace(tzinfo=None) -
+                                    target_date.replace(tzinfo=None)).days)
+                    if diff_days > date_tolerance_days:
+                        filtered_date += 1
+                        continue
+
                 results.append(normalized)
             except Exception as e:
                 logger.error("정규화 실패: %s - %s", raw.id, e)
+
+        if filtered_video > 0:
+            logger.info("동영상 뉴스 제외: %d건", filtered_video)
+        if filtered_date > 0:
+            logger.info("날짜 불일치 제외: %d건", filtered_date)
         logger.info("정규화 완료: %d/%d건", len(results), len(records))
         return results
+
+    def _is_video_news(self, raw: RawNewsRecord) -> bool:
+        """동영상/방송 뉴스인지 확인."""
+        data = raw.raw_data or {}
+        title = data.get("title", "") or ""
+
+        for pattern in VIDEO_NEWS_PATTERNS:
+            if re.search(pattern, title, re.IGNORECASE):
+                return True
+        return False
 
     def _clean_html(self, html: str) -> str:
         """HTML 태그 제거 및 정제."""
