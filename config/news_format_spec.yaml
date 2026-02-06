@@ -1,0 +1,632 @@
+# NewsCollector - 뉴스 작성 포맷 명세서
+# 3가지 뉴스 유형별 체계적인 작성 규칙
+# 절대 하드코딩 금지 - 모든 설정은 이 파일에서 관리
+
+# ==============================================================================
+# 뉴스 유형 자동 감지 규칙
+# ==============================================================================
+type_detection:
+  # 비주얼형 감지 (이미지 중심)
+  visual:
+    priority: 1  # 먼저 검사
+    conditions:
+      image_count_min: 2  # 2장 이상 이미지
+      keywords:  # 제목/본문에 포함 시
+        - "포토"
+        - "화보"
+        - "현장"
+        - "모습"
+        - "사진"
+        - "갤러리"
+        - "인터뷰"
+        - "후기"
+        - "직캠"
+        - "스냅"
+        - "공개"
+        - "모토쇼"
+        - "패션쇼"
+        - "콘서트"
+        - "팬미팅"
+        - "레드카펫"
+        - "포착"
+      keyword_match_threshold: 1  # 1개 이상 매칭 시
+
+  # 데이터형 감지 (숫자/통계 중심)
+  data:
+    priority: 2
+    conditions:
+      numeric_density_min: 0.03  # 텍스트 대비 숫자 비율 3% 이상
+      number_patterns:  # 정규식 패턴
+        - '\d+%'        # 퍼센트
+        - '\d+억'       # 금액 (억)
+        - '\d+조'       # 금액 (조)
+        - '\d+만'       # 수량 (만)
+        - '전년 대비'
+        - '동기 대비'
+        - '증가|감소|상승|하락'
+      pattern_match_threshold: 2  # 2개 이상 매칭 시
+      keywords:
+        - "통계"
+        - "지표"
+        - "수치"
+        - "조사"
+        - "분석"
+        - "전망"
+        - "순위"
+        - "랭킹"
+        - "점유율"
+        - "증감"
+
+  # 일반형 (기본값)
+  standard:
+    priority: 99  # 위 조건 불충족 시 기본값
+    fallback: true
+
+# ==============================================================================
+# 공통 설정
+# ==============================================================================
+common:
+  # 줄바꿈 및 간격 규칙
+  spacing:
+    title_to_summary: 1         # 제목 → 한줄요약 간 빈줄 수
+    summary_to_content: 1       # 한줄요약 → 본문 간 빈줄 수
+    section_gap: 1              # 섹션 간 빈줄 수
+    paragraph_gap: 1            # 문단 간 빈줄 수
+    image_margin_top: 1         # 이미지 위 빈줄
+    image_margin_bottom: 1      # 이미지 아래 빈줄
+    source_margin_top: 2        # 출처 위 빈줄
+
+  # 출처 표기
+  citation:
+    format: "[{source_name}]"           # 단일 출처
+    multiple_format: "[{source_names}]" # 복수 출처 (쉼표 구분)
+    date_format: "yyyy.MM.dd"           # 날짜 포맷
+    position: "end"                     # 위치: end(끝), inline(인라인)
+    max_sources: 5                      # 최대 출처 수
+
+  # 문장 연결어
+  connectors:
+    lead_to_body:
+      - ""                # 연결어 없이
+      - "이와 관련해"
+      - "이에 따르면"
+    body_internal:
+      - "또한"
+      - "아울러"
+      - "특히"
+      - "한편"
+    body_to_closing:
+      - "향후"
+      - "앞으로"
+      - "전문가들은"
+
+  # 불완전 문장 필터링 패턴
+  incomplete_endings:
+    - "지만"
+    - "하면"
+    - "하고"
+    - "하며"
+    - "라면"
+    - "니까"
+    - "므로"
+    - "면서"
+    - "듯이"
+    - "처럼"
+    - "때문"
+    - "인데"
+    - "는데"
+    - "은데"
+    - "다가"
+    - "고서"
+    - "어서"
+    - "아서"
+    - "다면"
+    - "자면"
+    - "해서"
+    - "..."
+
+# ==============================================================================
+# 일반형 (Standard) - 텍스트 중심 (80%)
+# ==============================================================================
+standard:
+  description: "일반 텍스트 뉴스 - 역피라미드 구조"
+  distribution_ratio: 0.80  # 전체 뉴스 중 비율
+
+  # 전체 길이 제한
+  length:
+    min: 400
+    max: 800
+    ideal: 600
+
+  # 요소 배치 순서
+  element_order:
+    - "title"
+    - "summary"
+    - "key_points"
+    - "body"
+    - "image"        # 본문 뒤에 보조적으로
+    - "source"
+
+  # 섹션별 상세 규칙
+  sections:
+    title:
+      max_length: 60
+      required: true
+      style:
+        bold: true
+        size: "large"
+
+    summary:
+      description: "한줄 요약 (핵심 메시지)"
+      length:
+        min: 30
+        max: 80
+        ideal: 50
+      required: true
+      style:
+        italic: false
+        color: "secondary"
+      sentence_roles:  # 우선 선택할 문장 역할
+        - "lead"
+        - "fact"
+
+    key_points:
+      description: "핵심 포인트 (3-5개)"
+      count:
+        min: 3
+        max: 5
+      item_length:
+        min: 15
+        max: 50
+      required: false  # 충분한 내용 있을 때만
+      style:
+        bullet: "•"
+        indent: 2
+      sentence_roles:
+        - "fact"
+        - "statistic"
+        - "lead"
+
+    body:
+      description: "상세 본문"
+      length:
+        min: 200
+        max: 500
+      required: true
+      paragraphs:
+        min: 2
+        max: 4
+      paragraph_length:
+        min: 50
+        max: 150
+      structure:
+        lead:
+          description: "리드 문단 (육하원칙)"
+          sentences:
+            min: 1
+            max: 2
+          sentence_roles:
+            - "lead"
+            - "fact"
+        middle:
+          description: "배경/상세"
+          sentences:
+            min: 2
+            max: 4
+          sentence_roles:
+            - "background"
+            - "detail"
+            - "quote"
+            - "statistic"
+        closing:
+          description: "전망/마무리"
+          sentences:
+            min: 1
+            max: 2
+          sentence_roles:
+            - "outlook"
+            - "implication"
+
+    image:
+      description: "보조 이미지 (선택)"
+      position: "after_body"
+      required: false
+      count:
+        min: 0
+        max: 1
+      caption:
+        required: true
+        max_length: 50
+      size: "medium"
+
+    source:
+      position: "end"
+      required: true
+
+# ==============================================================================
+# 비주얼형 (Visual) - 이미지 중심 (15%)
+# ==============================================================================
+visual:
+  description: "이미지 중심 뉴스 - 사진/영상이 주요 콘텐츠"
+  distribution_ratio: 0.15
+
+  length:
+    min: 200
+    max: 500
+    ideal: 350
+
+  element_order:
+    - "title"
+    - "summary"
+    - "primary_image"     # 대표 이미지 먼저
+    - "body"
+    - "gallery"           # 추가 이미지들
+    - "source"
+
+  sections:
+    title:
+      max_length: 50
+      required: true
+      style:
+        bold: true
+        size: "large"
+
+    summary:
+      description: "한줄 요약 (장면/상황 설명)"
+      length:
+        min: 20
+        max: 60
+        ideal: 40
+      required: true
+      sentence_roles:
+        - "lead"
+        - "hook"
+
+    primary_image:
+      description: "대표 이미지 (가장 중요한 장면)"
+      position: "before_body"
+      required: true
+      size: "large"
+      caption:
+        required: true
+        max_length: 80
+        include_context: true  # 인물/장소/날짜 포함
+
+    body:
+      description: "간결한 설명"
+      length:
+        min: 100
+        max: 300
+      required: true
+      paragraphs:
+        min: 1
+        max: 2
+      structure:
+        context:
+          description: "상황 설명 (언제, 어디서, 누가)"
+          sentences:
+            min: 1
+            max: 2
+          sentence_roles:
+            - "lead"
+            - "fact"
+            - "background"
+        description:
+          description: "장면/내용 묘사"
+          sentences:
+            min: 1
+            max: 3
+          sentence_roles:
+            - "detail"
+            - "quote"
+
+    gallery:
+      description: "추가 이미지 갤러리"
+      position: "after_body"
+      required: false
+      count:
+        min: 0
+        max: 10
+      layout:
+        type: "grid"  # grid, carousel, vertical
+        columns: 2
+      caption:
+        required: true
+        max_length: 50
+
+    source:
+      position: "end"
+      required: true
+
+  # 이미지 수에 따른 레이아웃 변경
+  image_layout_rules:
+    single:
+      primary_size: "extra_large"
+      show_gallery: false
+    few:  # 2-4장
+      primary_size: "large"
+      gallery_layout: "horizontal"
+      gallery_columns: 2
+    many:  # 5장 이상
+      primary_size: "large"
+      gallery_layout: "grid"
+      gallery_columns: 3
+      show_count_badge: true  # "+N장 더보기"
+
+# ==============================================================================
+# 데이터형 (Data) - 숫자/통계 중심 (5%)
+# ==============================================================================
+data:
+  description: "데이터 중심 뉴스 - 통계/수치가 핵심"
+  distribution_ratio: 0.05
+
+  length:
+    min: 300
+    max: 600
+    ideal: 450
+
+  element_order:
+    - "title"
+    - "summary"
+    - "key_numbers"       # 핵심 수치 먼저
+    - "chart"             # 차트/그래프 (있으면)
+    - "body"
+    - "source"
+
+  sections:
+    title:
+      max_length: 60
+      required: true
+      include_number: true  # 제목에 핵심 수치 포함 권장
+      style:
+        bold: true
+        size: "large"
+
+    summary:
+      description: "한줄 요약 (핵심 수치 + 의미)"
+      length:
+        min: 30
+        max: 80
+        ideal: 50
+      required: true
+      must_include: "number"  # 반드시 숫자 포함
+      sentence_roles:
+        - "lead"
+        - "statistic"
+
+    key_numbers:
+      description: "핵심 수치 하이라이트"
+      position: "before_body"
+      required: true
+      count:
+        min: 2
+        max: 4
+      item_format:
+        number_style: "bold"
+        unit_style: "normal"
+        label_position: "below"  # 수치 아래에 레이블
+      layout:
+        type: "cards"  # cards, inline, table
+        columns: 2
+
+    chart:
+      description: "데이터 시각화"
+      position: "before_body"
+      required: false
+      types:
+        - "bar"         # 막대 그래프
+        - "line"        # 선 그래프
+        - "pie"         # 파이 차트
+        - "comparison"  # 비교 차트
+      size: "medium"
+      caption:
+        required: true
+        include_source: true  # 데이터 출처 명시
+
+    body:
+      description: "분석 및 해석"
+      length:
+        min: 150
+        max: 400
+      required: true
+      paragraphs:
+        min: 2
+        max: 3
+      structure:
+        context:
+          description: "현황/발표 내용"
+          sentences:
+            min: 1
+            max: 2
+          sentence_roles:
+            - "lead"
+            - "statistic"
+        analysis:
+          description: "의미/원인 분석"
+          sentences:
+            min: 2
+            max: 3
+          sentence_roles:
+            - "background"
+            - "detail"
+            - "quote"
+        outlook:
+          description: "전망/시사점"
+          sentences:
+            min: 1
+            max: 2
+          sentence_roles:
+            - "outlook"
+            - "implication"
+
+    source:
+      position: "end"
+      required: true
+      include_data_source: true  # 데이터 원본 출처 별도 명시
+
+  # 숫자 표기 규칙
+  number_formatting:
+    thousands_separator: ","     # 1,000
+    decimal_places: 1            # 소수점 1자리
+    percentage_format: "{n}%"
+    currency_format: "{n}원"
+    large_numbers:
+      억: 100000000
+      조: 1000000000000
+    comparison_indicators:
+      increase: "▲"
+      decrease: "▼"
+      unchanged: "─"
+
+# ==============================================================================
+# 문장 역할 분류 (sentence_patterns과 연동)
+# ==============================================================================
+sentence_roles:
+  lead:
+    description: "핵심 사실 (리드)"
+    priority: 1.0
+    endings:
+      - "했다"
+      - "밝혔다"
+      - "전했다"
+      - "발표했다"
+      - "보도했다"
+      - "됐다"
+      - "나타났다"
+
+  fact:
+    description: "팩트/사실"
+    priority: 0.9
+    endings:
+      - "이다"
+      - "였다"
+      - "있다"
+    keywords:
+      - "확인"
+      - "발표"
+      - "공개"
+
+  quote:
+    description: "인용문"
+    priority: 0.8
+    patterns:
+      - '"'
+      - "'"
+      - "라고 말했다"
+      - "라고 밝혔다"
+      - "라며"
+
+  background:
+    description: "배경/원인"
+    priority: 0.7
+    keywords:
+      - "때문"
+      - "이유로"
+      - "배경"
+      - "원인"
+      - "이전"
+      - "과거"
+      - "앞서"
+
+  detail:
+    description: "상세 정보"
+    priority: 0.6
+    keywords:
+      - "구체적"
+      - "자세히"
+      - "세부"
+      - "상세"
+
+  outlook:
+    description: "전망/예측"
+    priority: 0.75
+    keywords:
+      - "전망"
+      - "예상"
+      - "예측"
+      - "향후"
+      - "앞으로"
+      - "계획"
+    endings:
+      - "될 것"
+      - "할 예정"
+      - "보인다"
+      - "관측"
+
+  implication:
+    description: "시사점/영향"
+    priority: 0.7
+    keywords:
+      - "영향"
+      - "의미"
+      - "시사점"
+      - "결과"
+      - "파급"
+      - "중요"
+
+  statistic:
+    description: "통계/수치"
+    priority: 0.85
+    patterns:
+      - '\d+%'
+      - '\d+억'
+      - '\d+만'
+      - '\d+조'
+      - '\d+배'
+
+  hook:
+    description: "주목도 높은 문장"
+    priority: 0.9
+    patterns:
+      - "?"
+      - "!"
+      - "주목"
+      - "놀라"
+      - "충격"
+      - "역대"
+      - "최초"
+      - "최대"
+
+# ==============================================================================
+# 중복 제거 설정
+# ==============================================================================
+deduplication:
+  jaccard_threshold: 0.5          # Jaccard 유사도 임계값
+  substring_min_length: 15        # 연속 중복 최소 길이
+  min_unique_words: 5             # 최소 고유 단어 수
+
+# ==============================================================================
+# 포맷 선택 가이드
+# ==============================================================================
+format_selection_guide:
+  standard:
+    best_for:
+      - "정치/경제/사회 일반 뉴스"
+      - "정책 발표"
+      - "기업 동향"
+      - "인사 소식"
+    avoid_when:
+      - "이미지가 핵심인 경우"
+      - "수치가 뉴스의 핵심인 경우"
+
+  visual:
+    best_for:
+      - "인물 뉴스 (연예/스포츠)"
+      - "현장 취재"
+      - "행사/이벤트"
+      - "후기/리뷰"
+      - "패션/뷰티"
+    avoid_when:
+      - "이미지가 없거나 1장뿐인 경우"
+      - "텍스트 정보가 핵심인 경우"
+
+  data:
+    best_for:
+      - "경제 지표 발표"
+      - "통계 조사 결과"
+      - "순위/랭킹"
+      - "실적 발표"
+      - "시장 분석"
+    avoid_when:
+      - "수치가 거의 없는 경우"
+      - "정성적 내용이 주인 경우"

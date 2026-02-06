@@ -1,0 +1,227 @@
+# NewsCollector Stage 3 - 뉴스 생성 설정
+# AI 없이 뉴스 콘텐츠를 조립하기 위한 설정
+
+# 포맷별 길이 및 섹션 요구사항
+formats:
+  straight:
+    description: "스트레이트 뉴스 - 역피라미드 구조"
+    min_length: 400
+    max_length: 800
+    sections:
+      lead:
+        description: "핵심 사실 (육하원칙)"
+        min_sentences: 1
+        max_sentences: 2
+        priority_roles: ["lead", "fact"]
+      body:
+        description: "배경 및 상세"
+        min_sentences: 3
+        max_sentences: 6
+        priority_roles: ["background", "detail", "quote"]
+      closing:
+        description: "전망 및 마무리"
+        min_sentences: 1
+        max_sentences: 2
+        priority_roles: ["outlook", "implication"]
+
+  brief:
+    description: "속보/간략 뉴스"
+    min_length: 50
+    max_length: 150
+    sections:
+      headline:
+        description: "핵심 요약"
+        min_sentences: 1
+        max_sentences: 2
+        priority_roles: ["lead", "fact"]
+
+  analysis:
+    description: "분석 기사 - 심층 분석"
+    min_length: 1500
+    max_length: 3000
+    sections:
+      current_situation:
+        description: "현황"
+        min_length: 200
+        max_length: 500
+        priority_roles: ["lead", "fact", "detail"]
+        keywords: ["현재", "현황", "오늘", "최근"]
+      background:
+        description: "배경 및 원인"
+        min_length: 300
+        max_length: 600
+        priority_roles: ["background", "cause"]
+        keywords: ["배경", "원인", "이유", "때문", "이전", "과거"]
+      outlook:
+        description: "전망"
+        min_length: 300
+        max_length: 600
+        priority_roles: ["outlook", "prediction"]
+        keywords: ["전망", "예상", "예측", "향후", "앞으로", "될 것"]
+      implications:
+        description: "시사점 및 영향"
+        min_length: 200
+        max_length: 400
+        priority_roles: ["implication", "impact"]
+        keywords: ["영향", "의미", "시사점", "결과", "파급"]
+
+  feature:
+    description: "기획 기사"
+    min_length: 2000
+    max_length: 4000
+    sections:
+      intro:
+        description: "도입부 (문제제기)"
+        min_length: 200
+        max_length: 400
+        priority_roles: ["lead", "hook"]
+      main_body:
+        description: "본문 (다각도 분석)"
+        min_length: 1200
+        max_length: 2500
+        priority_roles: ["fact", "detail", "quote", "background"]
+      conclusion:
+        description: "결론 및 제언"
+        min_length: 300
+        max_length: 600
+        priority_roles: ["outlook", "implication"]
+
+  card_news:
+    description: "카드뉴스 (5-10장)"
+    min_cards: 5
+    max_cards: 10
+    card_length:
+      min: 80
+      max: 200
+    cards:
+      - name: "title_card"
+        description: "제목/훅"
+        priority_roles: ["lead", "hook"]
+      - name: "content_cards"
+        description: "핵심 포인트"
+        count: "3-8"
+        priority_roles: ["fact", "detail", "statistic"]
+      - name: "closing_card"
+        description: "마무리/출처"
+        priority_roles: ["outlook", "source"]
+
+  social_post:
+    description: "SNS 포스트"
+    min_length: 100
+    max_length: 280
+    sections:
+      hook:
+        description: "눈길 끄는 첫 문장"
+        max_length: 50
+        priority_roles: ["hook", "lead"]
+      core:
+        description: "핵심 내용"
+        max_length: 150
+        priority_roles: ["fact", "detail"]
+      cta:
+        description: "해시태그/링크"
+        max_length: 80
+        priority_roles: ["hashtag"]
+
+  newsletter:
+    description: "뉴스레터"
+    min_length: 800
+    max_length: 1500
+    sections:
+      greeting:
+        description: "인사말"
+        max_length: 100
+      highlights:
+        description: "주요 뉴스 요약"
+        min_length: 400
+        max_length: 800
+        priority_roles: ["lead", "fact"]
+      deep_dive:
+        description: "심층 분석"
+        min_length: 300
+        max_length: 500
+        priority_roles: ["background", "outlook"]
+      closing:
+        description: "마무리"
+        max_length: 100
+
+# 문장 역할 분류 패턴
+sentence_patterns:
+  lead:
+    description: "핵심 사실 문장 (리드)"
+    endings: ["했다", "밝혔다", "전했다", "발표했다", "보도했다", "됐다", "나타났다"]
+    keywords: []
+    weight: 1.0
+
+  fact:
+    description: "팩트 중심 문장"
+    endings: ["이다", "였다", "됐다", "있다"]
+    keywords: ["확인", "발표", "공개", "조사", "결과"]
+    weight: 0.9
+
+  quote:
+    description: "인용문"
+    patterns: ["\"", "'", "라고 말했다", "라고 밝혔다", "라며", "라고 전했다"]
+    weight: 0.8
+
+  background:
+    description: "배경/원인 설명"
+    keywords: ["때문", "이유로", "배경", "원인", "이전", "과거", "앞서"]
+    weight: 0.7
+
+  detail:
+    description: "상세 정보"
+    keywords: ["구체적", "자세히", "세부", "상세"]
+    weight: 0.6
+
+  outlook:
+    description: "전망/예측"
+    keywords: ["전망", "예상", "예측", "향후", "앞으로", "계획"]
+    endings: ["될 것", "할 예정", "보인다", "관측"]
+    weight: 0.7
+
+  implication:
+    description: "시사점/영향"
+    keywords: ["영향", "의미", "시사점", "결과", "파급", "중요"]
+    weight: 0.7
+
+  statistic:
+    description: "통계/수치"
+    patterns: ["\\d+%", "\\d+억", "\\d+만", "\\d+조", "\\d+배"]
+    weight: 0.8
+
+  hook:
+    description: "훅/주목도 높은 문장"
+    patterns: ["?", "!", "주목", "놀라", "충격", "역대", "최초", "최대"]
+    weight: 0.9
+
+# 문장 중요도 계산 가중치
+importance_weights:
+  keyword_match: 0.35      # 검색 키워드 매칭
+  entity_match: 0.25       # 엔티티 포함 여부
+  position_score: 0.20     # 문장 위치 (첫 문장 = 리드)
+  has_number: 0.10         # 숫자/통계 포함
+  sentence_length: 0.10    # 적정 길이 (20-60자)
+
+# 위치 점수 설정
+position_scoring:
+  first_sentence: 1.0      # 첫 문장
+  first_paragraph: 0.8     # 첫 문단
+  middle: 0.5              # 중간
+  last_paragraph: 0.6      # 마지막 문단
+
+# 문장 길이 설정
+sentence_length:
+  ideal_min: 20
+  ideal_max: 60
+  absolute_max: 150
+
+# 중복 제거 설정
+deduplication:
+  similarity_threshold: 0.5  # Jaccard 유사도 임계값 (낮을수록 엄격)
+  min_unique_words: 5        # 최소 고유 단어 수
+
+# 출처 표기 설정
+citation:
+  max_sources: 5
+  format: "{source_name} ({date})"
