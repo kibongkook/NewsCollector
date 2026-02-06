@@ -876,6 +876,22 @@ class ContentAssembler:
         re.compile(r'^[◀◁◀◀▶▷]\s*(앵커|기자|리포터|리포트|진행|출연)'),
         # 프로그램 이름 + 기자/앵커 이름
         re.compile(r'(뉴스투데이|뉴스9|뉴스데스크|아침뉴스|저녁뉴스)\s+.{2,10}$'),
+        # 플레이스홀더 (CMS 템플릿 변수)
+        re.compile(r'\[%%\w+%%\]'),
+        # 기사 제목 + 날짜/출처 (parentheses에 언론사+날짜)
+        re.compile(r'.*[\(（]\d{1,2}월\s*\d{1,2}일\s+.{2,15}[\)）]'),
+        # 칼럼명 (대괄호 안에 저자명이나 칼럼명)
+        re.compile(r'\[.{2,30}(의|이)\s+.{2,20}\]'),
+        # 제작진 정보
+        re.compile(r'(기획|출연|연출|편집|촬영|제작)[:：·]\s*.{2,10}\s*(논설위원|기자|피디|PD|작가|연출가)'),
+        # 기자 보도 서명
+        re.compile(r'.{2,10}\s*(기자|특파원|앵커|리포터)(의|가)?\s*(보도|리포트|전합니다|입니다)'),
+        # 시청자 참여 유도
+        re.compile(r'(제보|의견|문의).*(기다립니다|보내주세요|문의하세요)'),
+        # 방송 프로그램 마무리 멘트
+        re.compile(r'(시청|구독|좋아요|알림 설정).*(부탁|감사)'),
+        # 대괄호 안 인물명 (캡션 스타일)
+        re.compile(r'\[.{2,10}\s+(대통령|장관|의원|CEO|대표|국장|본부장)\]'),
     ]
 
     def _is_boilerplate_sentence(self, sentence: str) -> bool:
@@ -971,23 +987,29 @@ class ContentAssembler:
         candidates: List[ClassifiedSentence],
         primary_source: Optional[str],
         max_count: int,
+        strict: bool = True,
     ) -> List[ClassifiedSentence]:
         """Primary source 문장 우선 선택 (교차 기사 혼합 방지)
 
-        primary source의 문장을 먼저 채우고, 부족한 경우에만
-        secondary source에서 보충합니다.
+        strict=True (기본값): primary source 문장만 사용, 부족해도 secondary 사용 안 함
+        strict=False: primary source 부족 시 secondary source에서 보충
         """
         if not primary_source or not candidates:
             return candidates[:max_count]
 
         primary = [s for s in candidates if s.source_news_id == primary_source]
-        secondary = [s for s in candidates if s.source_news_id != primary_source]
 
-        result = primary[:max_count]
-        remaining = max_count - len(result)
-        if remaining > 0:
-            result.extend(secondary[:remaining])
-        return result
+        if strict:
+            # 엄격 모드: primary source만 사용 (교차 혼합 최소화)
+            return primary[:max_count]
+        else:
+            # 관대 모드: 부족 시 secondary 보충
+            secondary = [s for s in candidates if s.source_news_id != primary_source]
+            result = primary[:max_count]
+            remaining = max_count - len(result)
+            if remaining > 0:
+                result.extend(secondary[:remaining])
+            return result
 
     def _build_sections(
         self,
@@ -1527,7 +1549,7 @@ class ContentAssembler:
             return False
 
         # 플레이스홀더/템플릿 변수 제외
-        if '{{' in img_url or '}}' in img_url or '{%' in img_url or '${' in img_url:
+        if '{{' in img_url or '}}' in img_url or '{%' in img_url or '${' in img_url or '%%' in img_url:
             return False
 
         url_lower = img_url.lower()
