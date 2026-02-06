@@ -531,11 +531,11 @@ class ContentAssembler:
             news.source_name for news in source_news if news.source_name
         ))
 
-        # 6. 이미지 수집 (enriched news에서)
+        # 6. 이미지 수집 (enriched news에서) + 필터링
         all_images: List[str] = []
         for news in source_news:
             for img in (news.image_urls or []):
-                if img and img not in all_images:
+                if img and img not in all_images and self._is_valid_news_image(img):
                     all_images.append(img)
 
         # 이미지 최대 개수 (설정 기반)
@@ -1239,3 +1239,70 @@ class ContentAssembler:
             source_count=0,
             sources=[],
         )
+
+    def _is_valid_news_image(self, img_url: str) -> bool:
+        """뉴스 관련 이미지인지 검증 (광고/아이콘/UI 이미지 제외)"""
+        if not img_url:
+            return False
+
+        # HTTP로 시작해야 함
+        if not img_url.startswith('http'):
+            return False
+
+        # 플레이스홀더 제외
+        if '{{' in img_url or '}}' in img_url or '{%' in img_url:
+            return False
+
+        url_lower = img_url.lower()
+
+        # 제외할 확장자 (SVG/ICO/GIF 등)
+        excluded_extensions = ('.svg', '.ico', '.cur', '.gif')
+        path = url_lower.split('?')[0]
+        if any(path.endswith(ext) for ext in excluded_extensions):
+            return False
+
+        # 제외 패턴 (광고, 아이콘, 로고 등) - content_scraper.py와 동일
+        exclude_patterns = [
+            # 아이콘/로고/버튼/UI 요소
+            'icon', 'logo', 'btn', 'button', 'badge',
+            'util_', '_util', 'view_util', 'view_btn', 'view_bt',
+            'tool-', '-tool', 'bookmark', 'print', 'copy', 'font',
+            # 배경/장식/정보 이미지
+            '_bg', 'bg_', '_bg.', 'series_', 'header_', 'footer_',
+            '_info', 'info_', 'notice_', 'popup_', 'modal_',
+            # 광고 관련
+            'banner', 'ad_', 'ads_', '/ad/', '/ads/', 'adsense', 'advert', 'sponsor',
+            'promo', 'promotion', 'campaign', 'click', 'track',
+            # SNS 공유 버튼
+            'sns', 'share', 'view_sns', 'social',
+            'kakao', 'facebook', 'twitter', 'naver_', 'google_',
+            'instagram', 'youtube', 'tiktok', 'linkedin',
+            # 작은/썸네일/피드 이미지
+            'thumb_s', 'thumb_xs', '_s.', '_xs.', '_t.',
+            'small_', '_small', 'mini_', '_mini', 'thumbnail_small', '.thumb.',
+            '/feed/', 'feed_', '_feed', '_thumb', '/thumb/',
+            # 기자/관련기사 이미지
+            'journalist', 'reporter', 'byline', 'author',
+            'related_', '_related', 'recommend', 'sidebar',
+            # 플레이어/비디오 UI
+            'player', 'video_', '_video', 'play_', '_play',
+            # 기타 UI/플레이스홀더
+            'loading', 'spinner', 'placeholder', 'default', 'no-image', 'noimage',
+            'pixel', 'tracker', 'spacer', 'blank', 'transparent',
+            '1x1', '1px', 'sprite', 'emoji', 'avatar', 'profile',
+            'nav_', 'menu_', 'comment', 'reply', 'like', 'dislike',
+        ]
+
+        for pattern in exclude_patterns:
+            if pattern in url_lower:
+                return False
+
+        # 크기 추정 (URL에 크기 정보가 있는 경우)
+        size_pattern = r'[_-](\d+)x(\d+)'
+        size_match = re.search(size_pattern, url_lower)
+        if size_match:
+            width, height = int(size_match.group(1)), int(size_match.group(2))
+            if width < 150 or height < 100:
+                return False
+
+        return True
