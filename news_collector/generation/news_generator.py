@@ -87,6 +87,7 @@ class FallbackGeneratorResult:
     text: str
     images: List[str] = field(default_factory=list)
     sources: List[str] = field(default_factory=list)
+    news_type: str = "standard"  # 뉴스 유형 (standard/visual/data)
 
 
 class FallbackGenerator:
@@ -162,6 +163,7 @@ class FallbackGenerator:
             text=text,
             images=assembled.images,
             sources=assembled.sources,
+            news_type=assembled.news_type,
         )
 
     def _render_straight(
@@ -417,10 +419,16 @@ class NewsGenerator:
             images: List[str] = []
             sources: List[str] = []
 
+            used_claude = False
             if self.claude.is_available:
-                generated_text = self.claude.generate(prompt)
-                sources = list(set(n.source_name for n in source_news if n.source_name))
-            else:
+                try:
+                    generated_text = self.claude.generate(prompt)
+                    sources = list(set(n.source_name for n in source_news if n.source_name))
+                    used_claude = True
+                except Exception as e:
+                    logger.warning("Claude API 실패, 템플릿 폴백 전환: %s", e)
+
+            if not used_claude:
                 fallback_result = self.fallback.generate(
                     target_format,
                     source_news,
@@ -455,7 +463,7 @@ class NewsGenerator:
                 source_news_ids=[n.id for n in source_news],
                 citations=citations,
                 generation_mode=mode,
-                model_used="claude" if self.claude.is_available else "template",
+                model_used="claude" if used_claude else "template",
                 prompt_used=prompt.build_user_prompt()[:500],
                 word_count=len(body.split()),
                 char_count=len(body),

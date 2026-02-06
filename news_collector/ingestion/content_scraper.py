@@ -429,17 +429,21 @@ class ContentScraper:
         for pattern in boilerplate_patterns:
             text = re.sub(pattern, '', text, flags=re.IGNORECASE)
 
-        # 5. 광고/관련기사 태그 제거
+        # 5. 광고/관련기사/저작권 태그 제거
         ad_patterns = [
             r'\[관련기사\].*$',
             r'\[ⓒ.*?\]',
+            r'\[출처:\s*[^\]]+\]',
             r'Copyright\s*©.*$',
             r'무단\s*전재.*금지.*$',
             r'ⓒ\s*\d{4}.*$',
             r'All\s*[Rr]ights\s*[Rr]eserved.*$',
+            r'저작권자\s*\([cC©]\).*$',
+            r'<저작권자.*?(?:>|$)',
+            r'저작권\s*(?:ⓒ|©).*$',
             r'\(끝\)\s*$',
-            r'▶\s*.*$',  # ▶ 로 시작하는 관련 기사 링크
-            r'☞\s*.*$',  # ☞ 로 시작하는 관련 기사 링크
+            r'▶\s*.*$',
+            r'☞\s*.*$',
         ]
         for pattern in ad_patterns:
             text = re.sub(pattern, '', text, flags=re.IGNORECASE | re.MULTILINE)

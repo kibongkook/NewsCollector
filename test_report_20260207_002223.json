@@ -1,0 +1,91 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 0,
+    "failed_tests": 5,
+    "avg_score": 0.0,
+    "avg_char_count": 0.0,
+    "avg_generation_time_ms": 0.0,
+    "issue_counts": {
+      "GENERATION_FAILED": 5
+    },
+    "type_distribution": {}
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "맛집",
+      "timestamp": "2026-02-07T00:22:14.331084",
+      "search_count": 5,
+      "search_time_ms": 1204,
+      "generation_success": false,
+      "generation_time_ms": 572,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 2,
+      "keyword": "배달",
+      "timestamp": "2026-02-07T00:22:16.609468",
+      "search_count": 5,
+      "search_time_ms": 987,
+      "generation_success": false,
+      "generation_time_ms": 270,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 3,
+      "keyword": "물류",
+      "timestamp": "2026-02-07T00:22:18.367549",
+      "search_count": 5,
+      "search_time_ms": 968,
+      "generation_success": false,
+      "generation_time_ms": 281,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 4,
+      "keyword": "아이돌",
+      "timestamp": "2026-02-07T00:22:20.117972",
+      "search_count": 5,
+      "search_time_ms": 793,
+      "generation_success": false,
+      "generation_time_ms": 267,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 5,
+      "keyword": "건강",
+      "timestamp": "2026-02-07T00:22:21.678871",
+      "search_count": 5,
+      "search_time_ms": 1021,
+      "generation_success": false,
+      "generation_time_ms": 297,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    }
+  ]
+}

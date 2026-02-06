@@ -1,0 +1,181 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 100.0,
+    "avg_char_count": 628.4,
+    "avg_generation_time_ms": 423.0,
+    "issue_counts": {},
+    "type_distribution": {
+      "visual": 5
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "대통령",
+      "timestamp": "2026-02-07T00:34:07.261327",
+      "search_count": 5,
+      "search_time_ms": 298,
+      "generation_success": true,
+      "generation_time_ms": 456,
+      "generated_char_count": 520,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 31,
+        "summary_length": 96,
+        "body_length": 520,
+        "total_length": 551,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "주식",
+      "timestamp": "2026-02-07T00:34:11.510100",
+      "search_count": 5,
+      "search_time_ms": 1347,
+      "generation_success": true,
+      "generation_time_ms": 432,
+      "generated_char_count": 709,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 46,
+        "summary_length": 106,
+        "body_length": 709,
+        "total_length": 755,
+        "issues": []
+      },
+      "images": {
+        "total_count": 8,
+        "valid_count": 8,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "맛집",
+      "timestamp": "2026-02-07T00:34:21.708945",
+      "search_count": 5,
+      "search_time_ms": 1386,
+      "generation_success": true,
+      "generation_time_ms": 344,
+      "generated_char_count": 555,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 31,
+        "summary_length": 104,
+        "body_length": 555,
+        "total_length": 586,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "일본",
+      "timestamp": "2026-02-07T00:34:30.101730",
+      "search_count": 5,
+      "search_time_ms": 1100,
+      "generation_success": true,
+      "generation_time_ms": 409,
+      "generated_char_count": 623,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 59,
+        "summary_length": 68,
+        "body_length": 623,
+        "total_length": 682,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "카카오",
+      "timestamp": "2026-02-07T00:34:43.740725",
+      "search_count": 5,
+      "search_time_ms": 1365,
+      "generation_success": true,
+      "generation_time_ms": 474,
+      "generated_char_count": 735,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 30,
+        "summary_length": 78,
+        "body_length": 735,
+        "total_length": 765,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,873 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NewsCollector - 원본 vs 생성 비교</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            line-height: 1.7;
+        }
+        header {
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            color: white;
+            padding: 2.5rem 1rem;
+            text-align: center;
+        }
+        header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.3rem; }
+        header p { font-size: 0.9rem; opacity: 0.8; }
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 1rem; }
+        .stats-bar {
+            background: white; border-radius: 12px; padding: 1rem 1.5rem;
+            margin-bottom: 2rem; box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            display: flex; justify-content: space-around; text-align: center;
+        }
+        .stats-bar .stat .num { font-size: 1.5rem; font-weight: 700; color: #0f3460; }
+        .stats-bar .stat .label { font-size: 0.75rem; color: #888; }
+        .compare-section { margin-bottom: 2.5rem; }
+        .section-header {
+            display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;
+        }
+        .kw-badge {
+            background: #0f3460; color: white; padding: 0.3rem 1rem;
+            border-radius: 20px; font-size: 0.9rem; font-weight: 600;
+        }
+        .section-meta { font-size: 0.8rem; color: #888; }
+        .compare-grid {
+            display: grid; grid-template-columns: 1fr 40px 1fr; gap: 0; align-items: start;
+        }
+        .panel-arrow {
+            display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem; color: #0f3460; font-weight: 700; padding-top: 3rem;
+        }
+        .panel {
+            background: white; border-radius: 12px; padding: 1.5rem;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+        }
+        .panel-title {
+            font-size: 0.85rem; font-weight: 700; color: #555;
+            margin-bottom: 1rem; display: flex; align-items: center; gap: 0.4rem;
+        }
+        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+        .dot-blue { background: #3b82f6; }
+        .dot-green { background: #22c55e; }
+        .panel-left { border-top: 3px solid #3b82f6; }
+        .orig-card {
+            display: flex; gap: 0.8rem; padding: 0.8rem 0; border-bottom: 1px solid #f0f0f0;
+        }
+        .orig-card:last-child { border-bottom: none; }
+        .orig-num {
+            width: 24px; height: 24px; background: #e8f0fe; color: #3b82f6;
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 0.75rem; font-weight: 700; flex-shrink: 0; margin-top: 2px;
+        }
+        .orig-title {
+            font-size: 0.85rem; font-weight: 600; color: #1a1a2e;
+            margin-bottom: 0.3rem; line-height: 1.4;
+        }
+        .orig-body { font-size: 0.78rem; color: #666; line-height: 1.5; margin-bottom: 0.3rem; }
+        .orig-meta { display: flex; gap: 0.5rem; font-size: 0.7rem; color: #aaa; }
+        .orig-source { background: #f5f5f5; padding: 0.1rem 0.4rem; border-radius: 3px; }
+        .orig-link {
+            background: #e8f0fe; color: #1a73e8; padding: 0.1rem 0.4rem;
+            border-radius: 3px; text-decoration: none; font-weight: 500;
+        }
+        .orig-link:hover { background: #d2e3fc; }
+        .orig-title a {
+            color: #1a1a2e; text-decoration: none; border-bottom: 1px solid transparent;
+        }
+        .orig-title a:hover { color: #1a73e8; border-bottom-color: #1a73e8; }
+        .tag-link { text-decoration: none; cursor: pointer; }
+        .tag-link:hover { background: #dcfce7; }
+        .orig-thumb {
+            width: 60px; height: 60px; object-fit: cover; border-radius: 6px;
+            flex-shrink: 0; align-self: center;
+        }
+        .orig-img-count {
+            background: #fef3c7; color: #92400e; padding: 0.1rem 0.4rem;
+            border-radius: 3px; font-size: 0.7rem;
+        }
+        .type-badge {
+            padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.75rem; font-weight: 600;
+        }
+        .type-standard { background: #f3f4f6; color: #374151; }
+        .type-visual { background: #fef3c7; color: #92400e; }
+        .type-data { background: #dbeafe; color: #1e40af; }
+        .gen-primary-image {
+            margin-bottom: 1rem; border-radius: 8px; overflow: hidden;
+        }
+        .gen-primary-image img {
+            width: 100%; max-height: 300px; object-fit: cover; display: block;
+        }
+        .gen-chart-image img { max-height: 250px; object-fit: contain; background: #f9fafb; }
+        .gen-inline-image {
+            margin: 0.8rem 0; text-align: center;
+        }
+        .gen-inline-image img {
+            max-width: 80%; max-height: 200px; object-fit: cover; border-radius: 6px;
+        }
+        .gen-images { margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #eee; }
+        .gen-images-title {
+            font-size: 0.8rem; font-weight: 600; color: #555; margin-bottom: 0.5rem;
+        }
+        .gen-images-grid {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.5rem;
+        }
+        .gen-images-grid img {
+            width: 100%; height: 100px; object-fit: cover; border-radius: 6px;
+            cursor: pointer; transition: transform 0.2s;
+        }
+        .gen-images-grid img:hover { transform: scale(1.05); }
+        .panel-right { border-top: 3px solid #22c55e; }
+        .gen-card h3 {
+            font-size: 1.1rem; font-weight: 700; color: #1a1a2e;
+            margin-bottom: 1rem; line-height: 1.5;
+        }
+        .gen-body p { margin-bottom: 0.7rem; font-size: 0.9rem; color: #333; line-height: 1.8; }
+        .gen-footer {
+            margin-top: 1rem; padding-top: 0.8rem; border-top: 1px solid #eee;
+            font-size: 0.8rem; color: #888;
+        }
+        .tag {
+            background: #f0fdf4; color: #166534; padding: 0.1rem 0.5rem;
+            border-radius: 4px; font-size: 0.75rem; margin-right: 0.2rem;
+        }
+        @media (max-width: 768px) {
+            .compare-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .panel-arrow { transform: rotate(90deg); padding: 0; }
+        }
+        footer.page-footer { text-align: center; padding: 2rem; color: #aaa; font-size: 0.8rem; }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>NewsCollector</h1>
+        <p>원본 뉴스 vs 생성 뉴스 비교 | 2026년 02월 07일 07:50</p>
+    </header>
+    <div class="container">
+        <div class="stats-bar">
+            <div class="stat"><div class="num">5</div><div class="label">생성 기사</div></div>
+            <div class="stat"><div class="num">25</div><div class="label">원본 수집</div></div>
+            <div class="stat"><div class="num">40</div><div class="label">수집 이미지</div></div>
+            <div class="stat"><div class="num">638</div><div class="label">평균 글자수</div></div>
+            <div class="stat"><div class="num">434ms</div><div class="label">평균 생성시간</div></div>
+        </div>
+        
+        <section class="compare-section">
+            <div class="section-header">
+                <span class="kw-badge">AI</span>
+                <span class="type-badge type-standard">일반</span>
+                <span class="section-meta">원본 5건 → 생성 1건 | 801자 | 603ms</span>
+            </div>
+
+            <div class="compare-grid">
+                <div class="panel panel-left">
+                    <div class="panel-title">
+                        <span class="dot dot-blue"></span> 원본 뉴스 (5건)
+                    </div>
+                    <div class="orig-list">
+                        
+                <div class="orig-card">
+                    <div class="orig-num">1</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.yna.co.kr/view/AKR20260206143000017?input=1195m" target="_blank" rel="noopener">[테크톡노트] AI 에이전트와 에이전틱 AI 뭐가 다를까</a>
+                        </div>
+                        <div class="orig-body">올해 국내외 AI 업계에서 가장 자주 등장한 표현 가운데 하나는 단연 &#x27;에이전트&#x27;이다.
+AI 에이전트가 하나의 &#x27;행동 주체&#x27;라면 에이전틱 AI는 하나 또는 여러 에이전트가 목표 수행을 위해 협력·작동하는 시스템인 것이다.
+회사에 비유하면 AI 에이전트가 한명의 직원이라면 에이전틱 AI는 해당 직원이 목표를 정해 필요한 인력과 도구를 찾아 업무를 수행하는 협업 체계에 해당한다.
+전체 내용을 이해하기 위해서는 기사 본문과 함께 읽어야 합니다.
+(서울=연합뉴스) 한상용 기자 = 올해 국내외 AI 업계에서 가장 자주 등장한 표현 가운데 하...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">연합뉴스</span>
+                            <span class="orig-date">2026-02-07 07:14</span>
+                            <span class="orig-len">1593자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.yna.co.kr/view/AKR20260206143000017?input=1195m" target="_blank" rel="noopener" class="orig-link" title="https://www.yna.co.kr/view/AKR20260206143000017?input=1195m">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img7.yna.co.kr/etc/inner/KR/2026/02/06/AKR20260206143000017_02_i_P4.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">2</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9HWkNpVVoxSW1PbmJQc21GQXljWXQta1Z1NzE0TnhFMVhZYTJKX2M2M3pWZnNhclZHTVh6b0FhVnZlMkZTM2VCbWZHOTlXM2VWNXN3Y3JWMWk?oc=5" target="_blank" rel="noopener">美빅테크 AI에 6500억달러 투자, 엔비디아 8% 폭등(상보) - 뉴스1</a>
+                        </div>
+                        <div class="orig-body">美빅테크 AI에 6500억달러 투자, 엔비디아 8% 폭등(상보) 뉴스1</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">뉴스1</span>
+                            <span class="orig-date">2026-02-06 22:05</span>
+                            <span class="orig-len">39자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9HWkNpVVoxSW1PbmJQc21GQXljWXQta1Z1NzE0TnhFMVhZYTJKX2M2M3pWZnNhclZHTVh6b0FhVnZlMkZTM2VCbWZHOTlXM2VWNXN3Y3JWMWk?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9HWkNpVVoxSW1PbmJQc21GQXljWXQta1Z1NzE0TnhFMVhZYTJKX2M2M3pWZnNhclZHTVh6b0FhVnZlMkZTM2VCbWZHOTlXM2VWNXN3Y3JWMWk?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">3</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBQcm1lSU9QLTVnMk5sV0luTnlMN2RtWHR0Tm9idzZyNzJNTml0UjhTOEVHWGRaMWRQMmctT1Q0SndVaGVfaU1Wc2s0b0RSUTlLN0xTVkJpX3RnUnB1V1FzX1ItMHBRc2c?oc=5" target="_blank" rel="noopener">[뉴욕마감] AI 우려 잠재우고 상승…다우 5만 &#x27;사상 최고치&#x27; - 뉴스1</a>
+                        </div>
+                        <div class="orig-body">[뉴욕마감] AI 우려 잠재우고 상승…다우 5만 &#x27;사상 최고치&#x27; 뉴스1</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">뉴스1</span>
+                            <span class="orig-date">2026-02-06 21:56</span>
+                            <span class="orig-len">39자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBQcm1lSU9QLTVnMk5sV0luTnlMN2RtWHR0Tm9idzZyNzJNTml0UjhTOEVHWGRaMWRQMmctT1Q0SndVaGVfaU1Wc2s0b0RSUTlLN0xTVkJpX3RnUnB1V1FzX1ItMHBRc2c?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiZ0FVX3lxTFBQcm1lSU9QLTVnMk5sV0luTnlMN2RtWHR0Tm9idzZyNzJNTml0UjhTOEVHWGRaMWRQMmctT1Q0SndVaGVfaU1Wc2s0b0RSUTlLN0xTVkJpX3RnUnB1V1FzX1ItMHBRc2c?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">4</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9lbmUxODUwSzJLWkFOaXV1WWVETUlMWlVCQ01fLUVtME02MUg1bDBtdl9DWUVuOWlRRHRReWFUTEhPY19nMnI2Ulh4TE5pUDluajJkYW9DYVg?oc=5" target="_blank" rel="noopener">&quot;AI 버블 과장&quot; 미증시 일제 급등…다우 5만 돌파, 신고가(상보) - 뉴스1</a>
+                        </div>
+                        <div class="orig-body">&quot;AI 버블 과장&quot; 미증시 일제 급등…다우 5만 돌파, 신고가(상보) 뉴스1</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">뉴스1</span>
+                            <span class="orig-date">2026-02-06 21:12</span>
+                            <span class="orig-len">42자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9lbmUxODUwSzJLWkFOaXV1WWVETUlMWlVCQ01fLUVtME02MUg1bDBtdl9DWUVuOWlRRHRReWFUTEhPY19nMnI2Ulh4TE5pUDluajJkYW9DYVg?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9lbmUxODUwSzJLWkFOaXV1WWVETUlMWlVCQ01fLUVtME02MUg1bDBtdl9DWUVuOWlRRHRReWFUTEhPY19nMnI2Ulh4TE5pUDluajJkYW9DYVg?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">5</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.hankyung.com/article/202602070247i" target="_blank" rel="noopener">&quot;올해 기술업계 AI 투자 7000억달러 육박…현금흐름 악화 경고음&quot;</a>
+                        </div>
+                        <div class="orig-body">&quot;올해 기술업계 AI 투자 7000억달러 육박…현금흐름 악화 경고음&quot;
+2025년 대비 60% 이상 증가
+잉여현금흐름 계속해서 감소
+CNBC에 따르면 알파벳, 마이크로소프트, 메타, 아마존 등 4대 하이퍼스케일러는 2026년을 앞두고 설비투자(capex)를 대폭 확대하고 있으며, 올해 합산 지출 규모는 약 7000억달러에 이를 것으로 추산된다. 이는 2025년 기록한 사상 최대 수준 대비 60% 이상 증가한 수치다.
+CNBC는 이 같은 투자 확대가 현금 창출력에 상당한 희생을 요구할 것이라고 지적했다. 지난해 미국 4대 인터넷 기업이...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">한국경제</span>
+                            <span class="orig-date">2026-02-07 07:09</span>
+                            <span class="orig-len">1910자</span>
+                            <span class="orig-img-count">1장</span>
+                            <a href="https://www.hankyung.com/article/202602070247i" target="_blank" rel="noopener" class="orig-link" title="https://www.hankyung.com/article/202602070247i">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img.hankyung.com/photo/202602/01.43208475.1.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                    </div>
+                </div>
+
+                <div class="panel-arrow">→</div>
+
+                <div class="panel panel-right">
+                    <div class="panel-title">
+                        <span class="dot dot-green"></span> 생성된 뉴스
+                    </div>
+                    <div class="gen-card">
+                        <h3>[테크톡노트] AI 에이전트와 에이전틱 AI 뭐가 다를까</h3>
+                        
+                        <div class="gen-body">
+                            <p>CNBC는 이 같은 투자 확대가 현금 창출력에 상당한 희생을 요구할 것이라고 지적했다. 뉴욕=박신영 특파원 
+ⓒ 한경닷컴, 
+ADVERTISEMENT
+ADVERTISEMENT.</p>
+<p>&quot;올해 기술업계 AI 투자 7000억달러 육박…현금흐름 악화 경고음&quot;
+2025년 대비 60% 이상 증가
+잉여현금흐름 계속해서 감소
+CNBC에 따르면 알파벳, 마이크로소프트, 메타, 아마존 등 4대 하이퍼스케일러는 2026년을 앞두고 설비투자(capex)를 대폭 확대하고 있으며, 올해 합산 지출 규모는 약 7000억달러에 이를 것으로 추산된다. 기업들이 고가의 AI 반도체를 확보하고, 초대형 데이터센터와 네트워크 인프라를 구축하기 위해 대규모 선투자에 나서고 있기 때문이다. 또한 롱보우 자산운용의 제이크 달러하이드 최고경영자(CEO)는 “AI에 이처럼 막대한 자금을 투입하면 잉여현금흐름이 줄어드는 것은 불가피하다”며 “부채와 자본의 최적 조합을 찾는 것이 경영진의 역할”이라고 말했다. 모펫앤드네이선슨 공동 설립자인 마이클 네이선슨은 CNBC에 “우리는 새로운 기술 전환의 초입에 있으며, 매출 성장의 지속 가능성을 판단하기가 매우 어렵다”며 “지금은 예측이 훨씬 더 어려운 국면”이라고 말했다. 아울러 [뉴욕마감] AI 우려 잠재우고 상승…다우 5만 &#x27;사상 최고치&#x27; 뉴스1. &quot;AI 버블 과장&quot; 미증시 일제 급등…다우 5만 돌파, 신고가(상보) 뉴스1.</p>
+<p>향후 더 큰 폭의 하락이 나타날 가능성이 크다. CNBC는 아마존이 가장 공격적인 투자 계획을 내놓았지만, 알파벳 역시 큰 차이가 없다고 전했다.</p>
+
+                        </div>
+                        <div class="gen-inline-image"><img src="https://img7.yna.co.kr/etc/inner/KR/2026/02/06/AKR20260206143000017_02_i_P4.jpg" alt="" onerror="this.parentElement.style.display='none'"></div>
+                        
+                        <div class="gen-footer">
+                            출처: <a href="https://news.google.com/rss/articles/CBMiWEFVX3lxTE9lbmUxODUwSzJLWkFOaXV1WWVETUlMWlVCQ01fLUVtME02MUg1bDBtdl9DWUVuOWlRRHRReWFUTEhPY19nMnI2Ulh4TE5pUDluajJkYW9DYVg?oc=5" target="_blank" rel="noopener" class="tag tag-link">뉴스1</a> <a href="https://www.yna.co.kr/view/AKR20260206143000017?input=1195m" target="_blank" rel="noopener" class="tag tag-link">연합뉴스</a> <a href="https://www.hankyung.com/article/202602070247i" target="_blank" rel="noopener" class="tag tag-link">한국경제</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="compare-section">
+            <div class="section-header">
+                <span class="kw-badge">물류</span>
+                <span class="type-badge type-visual">비주얼</span>
+                <span class="section-meta">원본 5건 → 생성 1건 | 440자 | 425ms</span>
+            </div>
+
+            <div class="compare-grid">
+                <div class="panel panel-left">
+                    <div class="panel-title">
+                        <span class="dot dot-blue"></span> 원본 뉴스 (5건)
+                    </div>
+                    <div class="orig-list">
+                        
+                <div class="orig-card">
+                    <div class="orig-num">1</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.yna.co.kr/view/AKR20260206165900065?input=1195m" target="_blank" rel="noopener">쿠팡 물류센터 관리자, 폭염 속 쉬러간 일용직 노동자에 욕설</a>
+                        </div>
+                        <div class="orig-body">쿠팡 물류센터에서 관리자급 직원이 일용직 노동자에게 욕설 등 폭언을 했다가 징계를 받은 사실이 뒤늦게 알려졌다.
+쿠팡로지스틱스서비스는 폭언 등 부적절한 언행을 한 부천 물류센터의 직원 A씨에게 감봉 1개월 징계 처분을 했다고 7일 밝혔다.
+쿠팡은 최근 피해자인 일용직 노동자 B씨로부터 관련 제보를 접수하고 동영상 등 사실관계 확인 절차를 거쳐 징계를 결정한 것으로 파악됐다.
+전체 내용을 이해하기 위해서는 기사 본문과 함께 읽어야 합니다.
+(부천=연합뉴스) 홍현기 기자 = 쿠팡 물류센터에서 관리자급 직원이 일용직 노동자에게 욕설 등 ...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">연합뉴스</span>
+                            <span class="orig-date">2026-02-07 07:37</span>
+                            <span class="orig-len">1158자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.yna.co.kr/view/AKR20260206165900065?input=1195m" target="_blank" rel="noopener" class="orig-link" title="https://www.yna.co.kr/view/AKR20260206165900065?input=1195m">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img8.yna.co.kr/etc/inner/KR/2026/02/06/AKR20260206165900065_01_i_P4.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">2</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxPSTQxdkh3UTJtR1ZHb0Q1bHFUSnlVTGpXaGQzU18zOG9LYzV1Wk5hdGlhVTdORzc1TFNMSG05VEZMelNPT2J3NXk0QjdINHY0VGNLMnhLQjZDUXcyazFabks3ZHlfdTh1QVlqVnBhTzZBeU1zR3QtNlZPbWdSYzZ5bXctRmFsLUdM?oc=5" target="_blank" rel="noopener">아마존, 2027년까지 일자리 50만개 &#x27;로봇&#x27; 대체…물류센터 자동화 가속 - 글로벌이코노믹</a>
+                        </div>
+                        <div class="orig-body">미국 조지아주 스톤마운틴 아마존 물류센터 현장 취재를 통해 확인한 내용으로, 세계 최대 전자상거래 기업의 급격한 자동화 전략이 노동시장에 미칠 파장을 예고하고 있다.
+가디언 기자가 방문한 스톤마운틴 물류센터는 64만제곱피트(약 5만9000㎡) 규모 4층 건물이다. 아마존은 미국 내 1200개 물류센터 가운데 28곳을 대중에 공개하고 있다.
+현장에서는 룸바 청소기를 닮은 로봇들이 제품 선반을 작업자와 피킹 담당자 사이로 옮기고 있었다. 컨베이어 벨트를 따라 이동하는 로봇은 배송 라벨을 인쇄해 상자에 부착했다. 자동화 크레인 팔은 제품...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">글로벌이코노믹</span>
+                            <span class="orig-date">2026-02-06 22:35</span>
+                            <span class="orig-len">2280자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxPSTQxdkh3UTJtR1ZHb0Q1bHFUSnlVTGpXaGQzU18zOG9LYzV1Wk5hdGlhVTdORzc1TFNMSG05VEZMelNPT2J3NXk0QjdINHY0VGNLMnhLQjZDUXcyazFabks3ZHlfdTh1QVlqVnBhTzZBeU1zR3QtNlZPbWdSYzZ5bXctRmFsLUdM?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiiAFBVV95cUxPSTQxdkh3UTJtR1ZHb0Q1bHFUSnlVTGpXaGQzU18zOG9LYzV1Wk5hdGlhVTdORzc1TFNMSG05VEZMelNPT2J3NXk0QjdINHY0VGNLMnhLQjZDUXcyazFabks3ZHlfdTh1QVlqVnBhTzZBeU1zR3QtNlZPbWdSYzZ5bXctRmFsLUdM?oc=5">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://nimage.g-enews.com/phpwas/restmb_allidxmake.php?idx=5&amp;simg=20260207073032001022bd56fbc3c21121419978.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">3</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE05SXlKeDZDcUFjeU9pRVdHWjJGT0M2RmlfSTZCWDllVVk4YlNTSkJGd0hHdGVtcG5IOUFhbnBCdHVScDg5UG91QURuWFdPR1hiMms2Wm9oQVF2Z1owYXIwRNIBeEFVX3lxTFBVNzY4ZzZJTjZSQlNCaXRqQVQzVk1zdTVXVTVZTnM5UzctZW5NaVJaRl9pQnVkNUZNYnlNZXNKMVA4ZF9BSEg2OVIzbzRCOThfN05GbUVSTWFmaVJZWmt4OXQyY2NmWUdCMU05anNnY2N1eUhDaEw3Uw?oc=5" target="_blank" rel="noopener">[올댓차이나] 쉬인, 7400억원 투입 광둥성에 물류거점…미·유럽 규제 역풍 대응 - 뉴시스</a>
+                        </div>
+                        <div class="orig-body">[올댓차이나] 쉬인, 7400억원 투입 광둥성에 물류거점…미·유럽 규제 역풍 대응
+[서울=뉴시스]이재준 기자 = 중국 초저가 패션 전자상거래업체 쉬인(SHEIN·希音)이 광둥성에 대형 물류거점을 구축하고 있다고 닛케이 신문이 5일 보도했다.
+보도에 따르면 쉬인은 남부 광둥성 자오칭(肇慶)에 35억 위안(약 7천400억원)을 투입해 대규모 물류센터를 조성하고 있다. 저가 제품 수출을 통해 급성장한 쉬인을 겨냥해 미국과 유럽을 중심으로 규제 압박이 거세지는 속에서 물류 효율화와 비용 절감을 통해 성장세를 유지하려는 전략으로 풀이된다.
+...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">뉴시스</span>
+                            <span class="orig-date">2026-02-05 13:57</span>
+                            <span class="orig-len">1387자</span>
+                            <span class="orig-img-count">1장</span>
+                            <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE05SXlKeDZDcUFjeU9pRVdHWjJGT0M2RmlfSTZCWDllVVk4YlNTSkJGd0hHdGVtcG5IOUFhbnBCdHVScDg5UG91QURuWFdPR1hiMms2Wm9oQVF2Z1owYXIwRNIBeEFVX3lxTFBVNzY4ZzZJTjZSQlNCaXRqQVQzVk1zdTVXVTVZTnM5UzctZW5NaVJaRl9pQnVkNUZNYnlNZXNKMVA4ZF9BSEg2OVIzbzRCOThfN05GbUVSTWFmaVJZWmt4OXQyY2NmWUdCMU05anNnY2N1eUhDaEw3Uw?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiYEFVX3lxTE05SXlKeDZDcUFjeU9pRVdHWjJGT0M2RmlfSTZCWDllVVk4YlNTSkJGd0hHdGVtcG5IOUFhbnBCdHVScDg5UG91QURuWFdPR1hiMms2Wm9oQVF2Z1owYXIwRNIBeEFVX3lxTFBVNzY4ZzZJTjZSQlNCaXRqQVQzVk1zdTVXVTVZTnM5UzctZW5NaVJaRl9pQnVkNUZNYnlNZXNKMVA4ZF9BSEg2OVIzbzRCOThfN05GbUVSTWFmaVJZWmt4OXQyY2NmWUdCMU05anNnY2N1eUhDaEw3Uw?oc=5">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img1.newsis.com/2024/04/24/NISI20240424_0001534833_web.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">4</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTFBWdy1KODhjbWZkd2VjNWZMSjdQYVJqSk55dWdKcm1nSjFIVzZjWlJkSGxDRVNmc0Z4SnhOajlycGVfdnJnMXg5emNUNWt5OGxONl9nMHF3UGFRVHNUZzJ2ZtIBeEFVX3lxTE1ya3ZrTkVJZ3NpdTRPaEVCbzRpRHl0eHRZM0ZidWpKa1gyOUpxVmZlY2RydVBGTGxrb1ZsUHhrZHVxQWpSOW01QUhWbER3cnMwN0RQNk8zV2NlV1VPU1FOdFpidFA5T0FQYmxIRVBxc3lRMlBHLVVGaw?oc=5" target="_blank" rel="noopener">한국GM·부품노조 갈등 일단락…세종물류센터 정상화 수순 - 뉴시스</a>
+                        </div>
+                        <div class="orig-body">한국GM·부품노조 갈등 일단락…세종물류센터 정상화 수순
+새 위탁 운영업체와 기존 업체간 하도급 계약
+노조, 쟁의행위 중단하고 정상화 노력하기로
+한국GM, 생계 곤란 해소 위해 위로금 지급 예정
+6일 업계에 따르면 한국GM과 전국금속노조 GM부품물류지회는 근로자들의 &#x27;전원 고용승계&#x27;를 전제로 극적인 합의에 도달했다.
+합의안에 따라 세종물류센터의 새 위탁 운영업체인 정수유통은 경륜(전 우진물류)과 하도급 계약을 체결하고, 한국GM도 해당 계약 내용을 공식적으로 인정하기로 했다.
+정수유통은 경륜의 수급 업무와 관련해 현장감독자를 파견하지...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">뉴시스</span>
+                            <span class="orig-date">2026-02-06 06:54</span>
+                            <span class="orig-len">856자</span>
+                            <span class="orig-img-count">1장</span>
+                            <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTFBWdy1KODhjbWZkd2VjNWZMSjdQYVJqSk55dWdKcm1nSjFIVzZjWlJkSGxDRVNmc0Z4SnhOajlycGVfdnJnMXg5emNUNWt5OGxONl9nMHF3UGFRVHNUZzJ2ZtIBeEFVX3lxTE1ya3ZrTkVJZ3NpdTRPaEVCbzRpRHl0eHRZM0ZidWpKa1gyOUpxVmZlY2RydVBGTGxrb1ZsUHhrZHVxQWpSOW01QUhWbER3cnMwN0RQNk8zV2NlV1VPU1FOdFpidFA5T0FQYmxIRVBxc3lRMlBHLVVGaw?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiYEFVX3lxTFBWdy1KODhjbWZkd2VjNWZMSjdQYVJqSk55dWdKcm1nSjFIVzZjWlJkSGxDRVNmc0Z4SnhOajlycGVfdnJnMXg5emNUNWt5OGxONl9nMHF3UGFRVHNUZzJ2ZtIBeEFVX3lxTE1ya3ZrTkVJZ3NpdTRPaEVCbzRpRHl0eHRZM0ZidWpKa1gyOUpxVmZlY2RydVBGTGxrb1ZsUHhrZHVxQWpSOW01QUhWbER3cnMwN0RQNk8zV2NlV1VPU1FOdFpidFA5T0FQYmxIRVBxc3lRMlBHLVVGaw?oc=5">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img1.newsis.com/2026/01/12/NISI20260112_0002038570_web.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">5</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.theguru.co.kr/news/article.html?no=97773" target="_blank" rel="noopener">&#x27;운전자 없는 트럭&#x27; 中 무인물류차 시장, 2030년 5조 돌파 전망</a>
+                        </div>
+                        <div class="orig-body">[더구루=정등용 기자] 중국 무인물류차 시장이 빠른 속도로 성장하고 있다. 물류 서비스에 대한 편의성과 지속성을 요구하는 수요가 높아진 영향이다.
+7일 중국 화징산업연구원에 따르면 오는 2030년까지 중국의 무인 물류차 연간 판매량은 60만 대, 시장 규모는 약 244억6000만 위안(약 5조1700억원)에 이를 것으로 전망된다.
+지난 2024년 기준 중국의 무인 물류차 판매량은 약 5100대, 시장 규모는 2억6000만 위안 수준(약 550억원)으로 집계됐다. 이후 2025년 상반기까지 누적 인도 대수는 이미 1만2000대를 상회...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">theguru.co.kr</span>
+                            <span class="orig-date">2026-02-07 00:02</span>
+                            <span class="orig-len">1171자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.theguru.co.kr/news/article.html?no=97773" target="_blank" rel="noopener" class="orig-link" title="https://www.theguru.co.kr/news/article.html?no=97773">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://www.theguru.co.kr/data/photos/20260206/art_17703574921912_c8dad7.png" alt="" onerror="this.style.display='none'">
+                </div>
+                    </div>
+                </div>
+
+                <div class="panel-arrow">→</div>
+
+                <div class="panel panel-right">
+                    <div class="panel-title">
+                        <span class="dot dot-green"></span> 생성된 뉴스
+                    </div>
+                    <div class="gen-card">
+                        <h3>쿠팡 물류센터 관리자, 폭염 속 쉬러간 일용직 노동자에 욕설</h3>
+                        <div class="gen-primary-image"><img src="https://img8.yna.co.kr/etc/inner/KR/2026/02/06/AKR20260206165900065_01_i_P4.jpg" alt="" onerror="this.parentElement.style.display='none'"></div>
+                        <div class="gen-body">
+                            <p>아마존은 미국 내 1200개 물류센터 가운데 28곳을 대중에 공개하고 있다. 미국 조지아주 스톤마운틴 아마존 물류센터 현장 취재를 통해 확인한 내용으로, 세계 최대 전자상거래 기업의 급격한 자동화 전략이 노동시장에 미칠 파장을 예고하고 있다.</p>
+<p>가디언 기자가 방문한 스톤마운틴 물류센터는 64만제곱피트(약 5만9000㎡) 규모 4층 건물이다. 조지아주 북부 물류센터에서 피킹과 적재 업무를 담당하는 한 아마존 작업자는 보복 우려로 익명을 요구하며 &quot;지난 6개월간 우리 물류센터 인사부서에 큰 변화가 있었다&quot;고 전했다. 또한 물류센터 1층 천장에는 노란색 아마존 토트 박스를 실어나르는 컨베이어 벨트가 설치돼 있었다.</p>
+<p>업계에서는 아마존 자동화 전략이 미국 물류 산업 전반에 파급 효과를 미칠 것으로 보고 있다.</p>
+
+                        </div>
+                        
+                        <div class="gen-images"><div class="gen-images-title">갤러리 (10장)</div><div class="gen-images-grid"><img src="https://img2.yna.co.kr/photo/yna/YH/2026/02/07/PYH2026020702140001300_T2.jpg" alt="" onerror="this.parentElement.removeChild(this)"><img src="https://img8.yna.co.kr/photo/yna/YH/2017/04/11/PYH2017041144330001301_T2.jpg" alt="" onerror="this.parentElement.removeChild(this)"><img src="https://nimage.g-enews.com/phpwas/restmb_allidxmake.php?idx=5&amp;simg=20260207073032001022bd56fbc3c21121419978.jpg" alt="" onerror="this.parentElement.removeChild(this)"><img src="https://nimage.g-enews.com/comm_www/lng_flag_korea.png" alt="" onerror="this.parentElement.removeChild(this)"><img src="https://nimage.g-enews.com/comm_www/lng_flag_america.png" alt="" onerror="this.parentElement.removeChild(this)"><img src="https://img1.newsis.com/2024/04/24/NISI20240424_0001534833_web.jpg" alt="" onerror="this.parentElement.removeChild(this)"></div></div>
+                        <div class="gen-footer">
+                            출처: <a href="https://www.theguru.co.kr/news/article.html?no=97773" target="_blank" rel="noopener" class="tag tag-link">theguru.co.kr</a> <a href="https://www.yna.co.kr/view/AKR20260206165900065?input=1195m" target="_blank" rel="noopener" class="tag tag-link">연합뉴스</a> <a href="https://news.google.com/rss/articles/CBMiiAFBVV95cUxPSTQxdkh3UTJtR1ZHb0Q1bHFUSnlVTGpXaGQzU18zOG9LYzV1Wk5hdGlhVTdORzc1TFNMSG05VEZMelNPT2J3NXk0QjdINHY0VGNLMnhLQjZDUXcyazFabks3ZHlfdTh1QVlqVnBhTzZBeU1zR3QtNlZPbWdSYzZ5bXctRmFsLUdM?oc=5" target="_blank" rel="noopener" class="tag tag-link">글로벌이코노믹</a> <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTFBWdy1KODhjbWZkd2VjNWZMSjdQYVJqSk55dWdKcm1nSjFIVzZjWlJkSGxDRVNmc0Z4SnhOajlycGVfdnJnMXg5emNUNWt5OGxONl9nMHF3UGFRVHNUZzJ2ZtIBeEFVX3lxTE1ya3ZrTkVJZ3NpdTRPaEVCbzRpRHl0eHRZM0ZidWpKa1gyOUpxVmZlY2RydVBGTGxrb1ZsUHhrZHVxQWpSOW01QUhWbER3cnMwN0RQNk8zV2NlV1VPU1FOdFpidFA5T0FQYmxIRVBxc3lRMlBHLVVGaw?oc=5" target="_blank" rel="noopener" class="tag tag-link">뉴시스</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="compare-section">
+            <div class="section-header">
+                <span class="kw-badge">대학</span>
+                <span class="type-badge type-standard">일반</span>
+                <span class="section-meta">원본 5건 → 생성 1건 | 685자 | 422ms</span>
+            </div>
+
+            <div class="compare-grid">
+                <div class="panel panel-left">
+                    <div class="panel-title">
+                        <span class="dot dot-blue"></span> 원본 뉴스 (5건)
+                    </div>
+                    <div class="orig-list">
+                        
+                <div class="orig-card">
+                    <div class="orig-num">1</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.yna.co.kr/view/AKR20260206153300051?input=1195m" target="_blank" rel="noopener">소화기 30대 주문한다더니…대학병원 과장 사칭 2천900만원 사기</a>
+                        </div>
+                        <div class="orig-body">간호사 헬스장 단체 등록 미끼 대리구매 시도
+(부산=연합뉴스) 박성제 기자 = 대학병원 직원을 사칭해 물품 대리 구매를 제안하며 거액의 돈을 가로채는 &#x27;거래 가장 사기&#x27;가 잇따르고 있어 주의가 요구된다.
+7일 부산 서부경찰서에 따르면 최근 부산의 한 소방 물품 납품업체 사장 A씨는 모 대학병원 총무과장이라는 인물로부터 연락받았다.
+그는 60㎏짜리 소화기 30대를 주문하려는데 물품이 있는지를 물었고, A씨가 재고가 없다고 답했다.
+그러자 총무과장은 자신이 아는 다른 소방 물품 업체를 통해 대신 구매해 주면 수수료를 주겠다고 제안했다....</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">연합뉴스</span>
+                            <span class="orig-date">2026-02-07 07:31</span>
+                            <span class="orig-len">1262자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.yna.co.kr/view/AKR20260206153300051?input=1195m" target="_blank" rel="noopener" class="orig-link" title="https://www.yna.co.kr/view/AKR20260206153300051?input=1195m">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img0.yna.co.kr/photo/cms/2025/08/29/01/PCM20250829000001990_P4.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">2</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxQMGhiU0psMk4xc0ZWMVRyTy1hOV9FQ2FrRDB0QkVnWGFCdlVWdnc5V0t6d3d0Qk1nR0I3RFNPaGlWY1V4UzhocWctQnRQQ1Z3ZWhqMWtkWFdVS095UE95LUszZWFscml1SXlBVkY2aHdBZ2RualUyclhsMVFPX0ViUFpwYUhEWDTSAZsBQVVfeXFMT2Npc09NaFE4a2NqeDRDZjdfR2lNX0FMN19JQ0RDMGEzZ2ZsZmpUUmdUR3VtMDFibEZUdUUyU0w1dWpBNVhwdGFCZ0I0V0R6aDMweWdhZm16U2RkUFJGWnlhM0tuSHV2cHpwYWlEREtGNkVvOUV0ck5Ka2hwakx6eGxuMjAzQ2cxVUZOd3BkOVhrQldUVEZ4bmdiUkU?oc=5" target="_blank" rel="noopener">대학도 골머리… ‘문해력 졸업 시험’ 보는 곳도 - 조선일보</a>
+                        </div>
+                        <div class="orig-body">대학도 골머리… ‘문해력 졸업 시험’ 보는 곳도 조선일보</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">조선일보</span>
+                            <span class="orig-date">2026-02-06 15:53</span>
+                            <span class="orig-len">31자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxQMGhiU0psMk4xc0ZWMVRyTy1hOV9FQ2FrRDB0QkVnWGFCdlVWdnc5V0t6d3d0Qk1nR0I3RFNPaGlWY1V4UzhocWctQnRQQ1Z3ZWhqMWtkWFdVS095UE95LUszZWFscml1SXlBVkY2aHdBZ2RualUyclhsMVFPX0ViUFpwYUhEWDTSAZsBQVVfeXFMT2Npc09NaFE4a2NqeDRDZjdfR2lNX0FMN19JQ0RDMGEzZ2ZsZmpUUmdUR3VtMDFibEZUdUUyU0w1dWpBNVhwdGFCZ0I0V0R6aDMweWdhZm16U2RkUFJGWnlhM0tuSHV2cHpwYWlEREtGNkVvOUV0ck5Ka2hwakx6eGxuMjAzQ2cxVUZOd3BkOVhrQldUVEZ4bmdiUkU?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMihwFBVV95cUxQMGhiU0psMk4xc0ZWMVRyTy1hOV9FQ2FrRDB0QkVnWGFCdlVWdnc5V0t6d3d0Qk1nR0I3RFNPaGlWY1V4UzhocWctQnRQQ1Z3ZWhqMWtkWFdVS095UE95LUszZWFscml1SXlBVkY2aHdBZ2RualUyclhsMVFPX0ViUFpwYUhEWDTSAZsBQVVfeXFMT2Npc09NaFE4a2NqeDRDZjdfR2lNX0FMN19JQ0RDMGEzZ2ZsZmpUUmdUR3VtMDFibEZUdUUyU0w1dWpBNVhwdGFCZ0I0V0R6aDMweWdhZm16U2RkUFJGWnlhM0tuSHV2cHpwYWlEREtGNkVvOUV0ck5Ka2hwakx6eGxuMjAzQ2cxVUZOd3BkOVhrQldUVEZ4bmdiUkU?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">3</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE5YdFhqWTJYWFNZSF9qMi1PQkhGdG5tbUZyaEFNRXo3R3podjVsWW9nYUxicU1vM1c1M2hOU3h3TVpLbWttYnp1SDUyQlpLcGVSVVlqc1FR?oc=5" target="_blank" rel="noopener">2025 지속가능발전을 위한 대학혁신포럼 - 중앙일보</a>
+                        </div>
+                        <div class="orig-body">대학혁신지원사업 총괄협의회와 한국연구재단이 주최·주관하고 교육부가 후원한 ‘2025 지속가능발전을 위한 대학혁신포럼’이 1월 29일부터 30일까지 이틀간 부산 BEXCO에서 개최돼 전국 대학 관계자 약 1,700여 명이 참석한 가운데 성황리에 마무리됐다. 이번 포럼은 대학혁신지원사업의 주요 성과를 공유하고, 대학 간 협력을 기반으로 지속가능한 고등교육 혁신 방향을 모색하기 위해 마련됐다.
+이번 포럼에는 대학혁신지원사업에 참여 중인 전국 138개 대학 관계자를 비롯해 교육·연구 현장 관계자들이 대거 참여했다. 사업 추진 과정에서 축적...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">중앙일보</span>
+                            <span class="orig-date">2026-02-06 05:49</span>
+                            <span class="orig-len">1082자</span>
+                            <span class="orig-img-count">1장</span>
+                            <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE5YdFhqWTJYWFNZSF9qMi1PQkhGdG5tbUZyaEFNRXo3R3podjVsWW9nYUxicU1vM1c1M2hOU3h3TVpLbWttYnp1SDUyQlpLcGVSVVlqc1FR?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiVkFVX3lxTE5YdFhqWTJYWFNZSF9qMi1PQkhGdG5tbUZyaEFNRXo3R3podjVsWW9nYUxicU1vM1c1M2hOU3h3TVpLbWttYnp1SDUyQlpLcGVSVVlqc1FR?oc=5">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/06/51c33d87-8a88-4dae-b591-a2b11af37b42.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">4</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE4zMUplRU5QdFJMczR5UUxkM2hNRVlSVGtZMDlIS1dFUUZ2MEFsakhqSTM2ejhINDFXbUtGODlmMWRHVllKQ1FFenNyWmRINlU1VXVraF8ydkhMQdIBX0FVX3lxTE44WHRFQWhqRnBkZmVORE5weXU1cFBkQWtVYlNkSUVCTE5sX2ZrMDhwcnJtNXBLa3pCdG9QMW04b0J0ck5MaEl5dmRqMDZ0Z19iN1lPSEU5M0lFa1d0eFY0?oc=5" target="_blank" rel="noopener">고교학점제 첫 세대, 과목 선택은 시작됐는데···대학 권장과목은 ‘안갯속’[뉴스 물음표] - 경향신문</a>
+                        </div>
+                        <div class="orig-body">올해 고교 2학년 학생들은 ‘선택과목’을 듣게 됩니다. 원하는 1학기 수강 과목을 지난해 하반기에 정했고, 수업을 들으러 교실을 옮겨 다니게 됩니다. 마치 대학에서 수업을 들으러 강의실을 찾아다니듯이 말이죠.
+이는 고교학점제 도입에 따른 변화입니다. 올해 고2는 고교학점제를 처음 적용받는 학생들입니다. 2022 개정 교육과정에 따라 선택과목은 일반선택·진로선택·융합선택으로 나뉩니다. 예를 들어 미적분1, 확률과 통계는 일반선택이고, 미적분2·경제수학·인공지능수학 등은 진로선택으로 분류됩니다. 조금 더 세분화된 실용 통계나 수학과제 ...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">경향신문</span>
+                            <span class="orig-date">2026-02-06 21:00</span>
+                            <span class="orig-len">2156자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE4zMUplRU5QdFJMczR5UUxkM2hNRVlSVGtZMDlIS1dFUUZ2MEFsakhqSTM2ejhINDFXbUtGODlmMWRHVllKQ1FFenNyWmRINlU1VXVraF8ydkhMQdIBX0FVX3lxTE44WHRFQWhqRnBkZmVORE5weXU1cFBkQWtVYlNkSUVCTE5sX2ZrMDhwcnJtNXBLa3pCdG9QMW04b0J0ck5MaEl5dmRqMDZ0Z19iN1lPSEU5M0lFa1d0eFY0?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiWkFVX3lxTE4zMUplRU5QdFJMczR5UUxkM2hNRVlSVGtZMDlIS1dFUUZ2MEFsakhqSTM2ejhINDFXbUtGODlmMWRHVllKQ1FFenNyWmRINlU1VXVraF8ydkhMQdIBX0FVX3lxTE44WHRFQWhqRnBkZmVORE5weXU1cFBkQWtVYlNkSUVCTE5sX2ZrMDhwcnJtNXBLa3pCdG9QMW04b0J0ck5MaEl5dmRqMDZ0Z19iN1lPSEU5M0lFa1d0eFY0?oc=5">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img.khan.co.kr/news/2026/02/07/news-p.v1.20260206.36f432873f1345cc82fe5725235389fc_P1.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">5</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.kbs.co.kr/news/pc/view/view.do?ncd=8480165&amp;ref=A" target="_blank" rel="noopener">초등 5학년 때 ‘공통수학’ 선행하는데 왜 ‘수포자’ 늘까?</a>
+                        </div>
+                        <div class="orig-body">기사 본문 영역
+2월의 첫날이었던 지난주 일요일(1일) 낮, 서울 마포구의 학원 건물에서 아이들이 쏟아져나왔습니다. 초등학교 2~3학년 학생을 대상으로 치러지는 한 유명 수학학원의 입학시험이 치러진 날이었습니다.
+전국 80여 개 지점에서 동시에 치러지는 이 학원 시험에는 매년 초등학교 2~3학년 학생 만여 명이 응시합니다. 지난해 11월 첫 입학시험에 9,000여 명, 지난주에 치러진 시험에 5,000여 명이 몰렸습니다.
+■ 초등 때부터 선행학습…&quot;5학년에 고등 과정 시작&quot;
+이 학원에서는 초등 3학년에 들어가 1년 만에 초등 과정을...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">KBS</span>
+                            <span class="orig-date">2026-02-07 07:04</span>
+                            <span class="orig-len">2757자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://news.kbs.co.kr/news/pc/view/view.do?ncd=8480165&amp;ref=A" target="_blank" rel="noopener" class="orig-link" title="https://news.kbs.co.kr/news/pc/view/view.do?ncd=8480165&amp;ref=A">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://news.kbs.co.kr/data/fckeditor/new/image/2026/02/06/306661770368773554.png" alt="" onerror="this.style.display='none'">
+                </div>
+                    </div>
+                </div>
+
+                <div class="panel-arrow">→</div>
+
+                <div class="panel panel-right">
+                    <div class="panel-title">
+                        <span class="dot dot-green"></span> 생성된 뉴스
+                    </div>
+                    <div class="gen-card">
+                        <h3>소화기 30대 주문한다더니…대학병원 과장 사칭 2천900만원 사기</h3>
+                        
+                        <div class="gen-body">
+                            <p>마치 대학에서 수업을 들으러 강의실을 찾아다니듯이 말이죠. 고교학점제 이후 선택과목을 고를 수 있게 되면서 학생들은 대학의 권장과목 목록을 더욱 예의주시하게 됐습니다.</p>
+<p>입시 전문가들 사이에서는 ‘너무 구체적으로 권장과목을 제시하면 오히려 학생들의 학과 선택 여지를 없애버린다’는 우려 때문에 대학들이 공개를 늦추는 것 아니냐는 분석도 나옵니다. 간호사 헬스장 단체 등록 미끼 대리구매 시도
+(부산=연합뉴스) 박성제 기자 = 대학병원 직원을 사칭해 물품 대리 구매를 제안하며 거액의 돈을 가로채는 &#x27;거래 가장 사기&#x27;가 잇따르고 있어 주의가 요구된다. 또한 a씨는 이를 믿고 2천900만원가량을 송금했지만, 확인 결과 총무과장과 소방 물품 업체 모두 사기범이 꾸민 &#x27;가짜&#x27;로 드러났다. 학생들은 수학을 포기하고 싶은 이유로 &#x27;어려운 수학 문제(42.1%)&#x27;와 &#x27;수학 성적 부진(16.6%)&#x27;을 꼽았습니다.</p>
+<p>대학들은 고등교육법에 따라 입학연도 1년 10개월 전, 즉 고2의 4월 말까지 대입전형 시행계획을 수립해 공개합니다. ‘대학이 제시한 핵심과목·권장과목 가운데 학교에서 개설하지 않은 과목이 있는데, 이를 이수하지 않으면 평가에 불이익이 있는지’라는 질문에 대해 “이수 권장 과목 중 일부 과목을 듣지 않은 경우, 평가에 크게 영향이 없다”고 답했습니다.</p>
+
+                        </div>
+                        <div class="gen-inline-image"><img src="https://img0.yna.co.kr/photo/cms/2025/08/29/01/PCM20250829000001990_P4.jpg" alt="" onerror="this.parentElement.style.display='none'"></div>
+                        
+                        <div class="gen-footer">
+                            출처: <a href="https://news.kbs.co.kr/news/pc/view/view.do?ncd=8480165&amp;ref=A" target="_blank" rel="noopener" class="tag tag-link">KBS</a> <a href="https://www.yna.co.kr/view/AKR20260206153300051?input=1195m" target="_blank" rel="noopener" class="tag tag-link">연합뉴스</a> <a href="https://news.google.com/rss/articles/CBMiVkFVX3lxTE5YdFhqWTJYWFNZSF9qMi1PQkhGdG5tbUZyaEFNRXo3R3podjVsWW9nYUxicU1vM1c1M2hOU3h3TVpLbWttYnp1SDUyQlpLcGVSVVlqc1FR?oc=5" target="_blank" rel="noopener" class="tag tag-link">중앙일보</a> <a href="https://news.google.com/rss/articles/CBMiWkFVX3lxTE4zMUplRU5QdFJMczR5UUxkM2hNRVlSVGtZMDlIS1dFUUZ2MEFsakhqSTM2ejhINDFXbUtGODlmMWRHVllKQ1FFenNyWmRINlU1VXVraF8ydkhMQdIBX0FVX3lxTE44WHRFQWhqRnBkZmVORE5weXU1cFBkQWtVYlNkSUVCTE5sX2ZrMDhwcnJtNXBLa3pCdG9QMW04b0J0ck5MaEl5dmRqMDZ0Z19iN1lPSEU5M0lFa1d0eFY0?oc=5" target="_blank" rel="noopener" class="tag tag-link">경향신문</a> <a href="https://news.google.com/rss/articles/CBMihwFBVV95cUxQMGhiU0psMk4xc0ZWMVRyTy1hOV9FQ2FrRDB0QkVnWGFCdlVWdnc5V0t6d3d0Qk1nR0I3RFNPaGlWY1V4UzhocWctQnRQQ1Z3ZWhqMWtkWFdVS095UE95LUszZWFscml1SXlBVkY2aHdBZ2RualUyclhsMVFPX0ViUFpwYUhEWDTSAZsBQVVfeXFMT2Npc09NaFE4a2NqeDRDZjdfR2lNX0FMN19JQ0RDMGEzZ2ZsZmpUUmdUR3VtMDFibEZUdUUyU0w1dWpBNVhwdGFCZ0I0V0R6aDMweWdhZm16U2RkUFJGWnlhM0tuSHV2cHpwYWlEREtGNkVvOUV0ck5Ka2hwakx6eGxuMjAzQ2cxVUZOd3BkOVhrQldUVEZ4bmdiUkU?oc=5" target="_blank" rel="noopener" class="tag tag-link">조선일보</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="compare-section">
+            <div class="section-header">
+                <span class="kw-badge">맛집</span>
+                <span class="type-badge type-standard">일반</span>
+                <span class="section-meta">원본 5건 → 생성 1건 | 507자 | 386ms</span>
+            </div>
+
+            <div class="compare-grid">
+                <div class="panel panel-left">
+                    <div class="panel-title">
+                        <span class="dot dot-blue"></span> 원본 뉴스 (5건)
+                    </div>
+                    <div class="orig-list">
+                        
+                <div class="orig-card">
+                    <div class="orig-num">1</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://enter.etoday.co.kr/news/view/292638" target="_blank" rel="noopener">&#x27;전현무계획3&#x27; 안양 돈까스 정식·오징어 보쌈 맛집 투어</a>
+                        </div>
+                        <div class="orig-body">&#x27;전현무계획3&#x27;가 안양 돈까스 정식, 오징어 보쌈 맛집을 찾았다.
+6일 &#x27;전현무계획3&#x27;에서는 위너 김진우, 강승윤과 함께 안양의 돈까스 정식, 오징어 보쌈 맛집을 방문했다.
+이날 &#x27;전현무계획&#x27;에서는 안양 노포 맛집들을 탐방했다.
+먼저 네 사람은 대기번호가 65번에 달하는 안양의 유명 경양식 맛집을 찾았다. 긴 기다림 끝에 식당에 입성한 이들은 단일 메뉴인 &#x27;돈가스 정식&#x27;을 맛보며 수제 스프와 빵의 깊은 맛에 감탄을 쏟아냈다.
+식사 도중 전현무는 위너에게 &quot;한국 남자 아이돌 최초로 1억 스트리밍을 돌파한 곡이 있다고 들었다&quot;며 운을 ...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">enter.etoday.co.kr</span>
+                            <span class="orig-date">2026-02-06 21:56</span>
+                            <span class="orig-len">730자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://enter.etoday.co.kr/news/view/292638" target="_blank" rel="noopener" class="orig-link" title="https://enter.etoday.co.kr/news/view/292638">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://img.etoday.co.kr/pto_db/2026/02/600/20260206143049_2292516_700_792.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">2</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.bntnews.co.kr/article/view/bnt202602060191" target="_blank" rel="noopener">&#x27;전현무계획3&#x27; 안양 삼계탕 맛집</a>
+                        </div>
+                        <div class="orig-body">6일 방송된 MBN·채널S 예능 ‘전현무계획3’에서는 전현무와 곽튜브의 안양 미식 여행기가 전파를 탔다. 이날 두 사람은 안양 호계동에 위치한 삼계탕 맛집을 방문해 시청자들의 침샘을 자극했다.
+전현무는 해당 식당을 소개하며 “삼계탕 하나로 건물을 세운 전설적인 곳”이라고 설명해 기대감을 높였다. 평소 삼계탕을 즐겨 먹지 않는다고 밝혔던 두 사람은 국물을 한 입 맛보자마자 표정이 180도 달라졌다.
+깊고 진한 국물 맛에 감탄한 전현무와 곽튜브는 연신 “맛의 기적”이라며 극찬을 쏟아냈고, 숟가락을 놓지 못하고 폭풍 먹방을 이어갔다.
+한...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">bntnews.co.kr</span>
+                            <span class="orig-date">2026-02-06 21:30</span>
+                            <span class="orig-len">346자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.bntnews.co.kr/article/view/bnt202602060191" target="_blank" rel="noopener" class="orig-link" title="https://www.bntnews.co.kr/article/view/bnt202602060191">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://www.bntnews.co.kr/data/bnt/image/2026/02/06/bnt202602060486.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">3</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.topstarnews.net/news/articleView.html?idxno=15955575" target="_blank" rel="noopener">&#x27;전현무계획3&#x27; 안양 맛집, 관양동 돈까스 &amp; 안양역 오징어보쌈 식당 위...</a>
+                        </div>
+                        <div class="orig-body">(톱스타뉴스 장필구 기자) ‘전현무계획3’에서 지역민들의 뜨거운 인기를 자랑하는 맛집으로 소개한 경기도 안양시 소재 갈치조림·갈치구이 식당이 화제다.
+6일 MBN ‘전현무계획3’에서는 81번째 지역으로 안양으로 향해 진짜 맛집을 찾는 여정에 나섰다.
+전현무·곽튜브(곽준빈) 듀오는 특별 게스트로 위너 김진우·강승윤과 함께 경기 안양 호계동 삼계탕 식당, 관양동 돈까스 경양식집, 안양역 오징어보쌈 음식점 등을 차례로 방문해 먹방을 선보여 눈길을 끌었다.
+안양 만안구 안양동, 안양역 인근 약 300m 거리에 위치한 오징어보쌈 맛집은 원조...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">topstarnews.net</span>
+                            <span class="orig-date">2026-02-06 21:26</span>
+                            <span class="orig-len">526자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.topstarnews.net/news/articleView.html?idxno=15955575" target="_blank" rel="noopener" class="orig-link" title="https://www.topstarnews.net/news/articleView.html?idxno=15955575">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://cdn.topstarnews.net/news/photo/202602/15955575_1850235_1055.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">4</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1rbjVZd0ladUlyeEp0RE9OUm9Bdkg4V09uMHV0SnIyRzJvMElzOHkxUFNaYmpFWUV2ck01b0F4YmhQMGtJR1l6ZjBjYzN5SXFDUUV3dXpFaGFtNDBVc0ZNbA?oc=5" target="_blank" rel="noopener">대전시 &#x27;SNS 퀴즈·맛집 이벤트&#x27;로 시민과 쌍방향 소통 강화 - 뉴스1</a>
+                        </div>
+                        <div class="orig-body">대전시 &#x27;SNS 퀴즈·맛집 이벤트&#x27;로 시민과 쌍방향 소통 강화 뉴스1</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">뉴스1</span>
+                            <span class="orig-date">2026-02-04 00:41</span>
+                            <span class="orig-len">38자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1rbjVZd0ladUlyeEp0RE9OUm9Bdkg4V09uMHV0SnIyRzJvMElzOHkxUFNaYmpFWUV2ck01b0F4YmhQMGtJR1l6ZjBjYzN5SXFDUUV3dXpFaGFtNDBVc0ZNbA?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1rbjVZd0ladUlyeEp0RE9OUm9Bdkg4V09uMHV0SnIyRzJvMElzOHkxUFNaYmpFWUV2ck01b0F4YmhQMGtJR1l6ZjBjYzN5SXFDUUV3dXpFaGFtNDBVc0ZNbA?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">5</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5HYmplUG9LSGtpRXYtRmZsYmNKLU9zazR4Nm9oU0h1aW16bnlNcmNoeC1BSHBuaDBiSW5LSlhrNFdhaDg0ekx3ZHQwTVFTUldGMU1oYzZsNVQzckx2b0RPOGtTa0htQ3Fa?oc=5" target="_blank" rel="noopener">&#x27;생방송 투데이&#x27; 오늘 저녁 맛집...성수동 맛집 BEST 3, 버섯 전골 - 더쎈뉴스</a>
+                        </div>
+                        <div class="orig-body">SBS &#x27;생방송 투데이&#x27;, 6일 오후 6시 방송
+(더쎈뉴스 / The CEN News 류승현 기자) &#x27;생방송 투데이&#x27;에서 신선한 버섯이 한가득 건강한 전골 맛집을 소개한다.
+6일 오후 6시 방송되는 &#x27;생방송 투데이&#x27;에서는 &#x27;보고, 먹고, 즐기고! 3GO 여행&#x27;, &#x27;카페IN&#x27;, &#x27;그거 진짜야&#x27;, &#x27;인정 맛집&#x27; 코너를 진행한다.
+먼저 주말, 최적의 여행 코스를 추천하는 &#x27;보고, 먹고, 즐기고! 3GO 여행&#x27;에서는 &#x27;하얀 설렘 3GO 여행&#x27; 편으로 이야기를 전한다. 충남 청양의 &#x27;알프스 마을&#x27;로 떠나 &#x27;칠갑산 얼음분수축제&#x27;를 보고 즐기고...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">더쎈뉴스</span>
+                            <span class="orig-date">2026-02-06 07:51</span>
+                            <span class="orig-len">790자</span>
+                            <span class="orig-img-count">2장</span>
+                            <a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5HYmplUG9LSGtpRXYtRmZsYmNKLU9zazR4Nm9oU0h1aW16bnlNcmNoeC1BSHBuaDBiSW5LSlhrNFdhaDg0ekx3ZHQwTVFTUldGMU1oYzZsNVQzckx2b0RPOGtTa0htQ3Fa?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5HYmplUG9LSGtpRXYtRmZsYmNKLU9zazR4Nm9oU0h1aW16bnlNcmNoeC1BSHBuaDBiSW5LSlhrNFdhaDg0ekx3ZHQwTVFTUldGMU1oYzZsNVQzckx2b0RPOGtTa0htQ3Fa?oc=5">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://cdn.mhns.co.kr/news/thumbnail/202602/738651_867206_4746_v150.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                    </div>
+                </div>
+
+                <div class="panel-arrow">→</div>
+
+                <div class="panel panel-right">
+                    <div class="panel-title">
+                        <span class="dot dot-green"></span> 생성된 뉴스
+                    </div>
+                    <div class="gen-card">
+                        <h3>&#x27;전현무계획3&#x27; 안양 돈까스 정식·오징어 보쌈 맛집 투어</h3>
+                        
+                        <div class="gen-body">
+                            <p>먼저 네 사람은 대기번호가 65번에 달하는 안양의 유명 경양식 맛집을 찾았다. 이에 곽튜브는 곧 49세가 되는 전현무를 바라보며 묘한 분위기를 형성해 폭소를 불렀다.</p>
+<p>&#x27;전현무계획3&#x27;가 안양 돈까스 정식, 오징어 보쌈 맛집을 찾았다. 이날 &#x27;전현무계획&#x27;에서는 안양 노포 맛집들을 탐방했다. 또한 다음으로 방문한 40년 전통의 &#x27;오징어 보쌈&#x27; 맛집에서는 네 사람의 연애와 결혼 토크가 이어졌다. 식사 도중 전현무는 위너에게 &quot;한국 남자 아이돌 최초로 1억 스트리밍을 돌파한 곡이 있다고 들었다&quot;며 운을 뗐다. 이에 강승윤은 &quot;&#x27;REALLY REALLY&#x27;가 발매 39주 만에 오직 국내에서만 1억 스트리밍을 기록했다&quot;고 답했다. 김진우는 아직 결혼 생각이 없다고 밝혔고, 강승윤은 &quot;나도 일이 좋지만 49세 전에는 결혼하고 싶다&quot;고 말했다.</p>
+<p>결혼관에 대해서도 솔직한 대화가 오갔다.</p>
+
+                        </div>
+                        <div class="gen-inline-image"><img src="https://img.etoday.co.kr/pto_db/2026/02/600/20260206143049_2292516_700_792.jpg" alt="" onerror="this.parentElement.style.display='none'"></div>
+                        
+                        <div class="gen-footer">
+                            출처: <a href="https://www.bntnews.co.kr/article/view/bnt202602060191" target="_blank" rel="noopener" class="tag tag-link">bntnews.co.kr</a> <a href="https://news.google.com/rss/articles/CBMiaEFVX3lxTE5HYmplUG9LSGtpRXYtRmZsYmNKLU9zazR4Nm9oU0h1aW16bnlNcmNoeC1BSHBuaDBiSW5LSlhrNFdhaDg0ekx3ZHQwTVFTUldGMU1oYzZsNVQzckx2b0RPOGtTa0htQ3Fa?oc=5" target="_blank" rel="noopener" class="tag tag-link">더쎈뉴스</a> <a href="https://news.google.com/rss/articles/CBMiYEFVX3lxTE1rbjVZd0ladUlyeEp0RE9OUm9Bdkg4V09uMHV0SnIyRzJvMElzOHkxUFNaYmpFWUV2ck01b0F4YmhQMGtJR1l6ZjBjYzN5SXFDUUV3dXpFaGFtNDBVc0ZNbA?oc=5" target="_blank" rel="noopener" class="tag tag-link">뉴스1</a> <a href="https://www.topstarnews.net/news/articleView.html?idxno=15955575" target="_blank" rel="noopener" class="tag tag-link">topstarnews.net</a> <a href="https://enter.etoday.co.kr/news/view/292638" target="_blank" rel="noopener" class="tag tag-link">enter.etoday.co.kr</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <section class="compare-section">
+            <div class="section-header">
+                <span class="kw-badge">일본</span>
+                <span class="type-badge type-standard">일반</span>
+                <span class="section-meta">원본 5건 → 생성 1건 | 761자 | 336ms</span>
+            </div>
+
+            <div class="compare-grid">
+                <div class="panel panel-left">
+                    <div class="panel-title">
+                        <span class="dot dot-blue"></span> 원본 뉴스 (5건)
+                    </div>
+                    <div class="orig-list">
+                        
+                <div class="orig-card">
+                    <div class="orig-num">1</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxPRzM2Wk1nVjFrdmdmU2lKWDVvSVdhM3F6RDZaMXhfdmw3dWtZMG94SGtoTVpxcGdxQjF3WTV4eFBMaTIzVWJpSHpLZXk0ZDhiLTV2UXQtN2ZWa2dPZlpxN0gtOW5QcmY1OE5sNXoxTlkxMHlBM2JhR1hpQWNtLVEzY1JqONIBlwFBVV95cUxQdElfeDJDUEIzejYxU1dCT0ZRN0o5R1JaRnE4QWtPY2wtbGJuVWt4cGt3eUMyUDUzMTg1ZmY5MjNOd2Z4dFpTbDV1NzBhZ2EwejNGTzUwRDhZcFZ3dHJXWFRweUNaSmVMcHMtWV9la0k2UFV5clpnWEdYZmZSZmFtSHFWZXlOWF9VeGZmTVREdERJRDhqTXl3?oc=5" target="_blank" rel="noopener">애착인형과 눈물의 이별, &quot;대체자 없다&quot; 대만,일본전 누구? 무거워진 빅게임 피처의 어깨 - 조선일보</a>
+                        </div>
+                        <div class="orig-body">애착인형과 눈물의 이별, &quot;대체자 없다&quot; 대만,일본전 누구? 무거워진 빅게임 피처의 어깨 조선일보</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">조선일보</span>
+                            <span class="orig-date">2026-02-06 17:09</span>
+                            <span class="orig-len">54자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxPRzM2Wk1nVjFrdmdmU2lKWDVvSVdhM3F6RDZaMXhfdmw3dWtZMG94SGtoTVpxcGdxQjF3WTV4eFBMaTIzVWJpSHpLZXk0ZDhiLTV2UXQtN2ZWa2dPZlpxN0gtOW5QcmY1OE5sNXoxTlkxMHlBM2JhR1hpQWNtLVEzY1JqONIBlwFBVV95cUxQdElfeDJDUEIzejYxU1dCT0ZRN0o5R1JaRnE4QWtPY2wtbGJuVWt4cGt3eUMyUDUzMTg1ZmY5MjNOd2Z4dFpTbDV1NzBhZ2EwejNGTzUwRDhZcFZ3dHJXWFRweUNaSmVMcHMtWV9la0k2UFV5clpnWEdYZmZSZmFtSHFWZXlOWF9VeGZmTVREdERJRDhqTXl3?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMigwFBVV95cUxPRzM2Wk1nVjFrdmdmU2lKWDVvSVdhM3F6RDZaMXhfdmw3dWtZMG94SGtoTVpxcGdxQjF3WTV4eFBMaTIzVWJpSHpLZXk0ZDhiLTV2UXQtN2ZWa2dPZlpxN0gtOW5QcmY1OE5sNXoxTlkxMHlBM2JhR1hpQWNtLVEzY1JqONIBlwFBVV95cUxQdElfeDJDUEIzejYxU1dCT0ZRN0o5R1JaRnE4QWtPY2wtbGJuVWt4cGt3eUMyUDUzMTg1ZmY5MjNOd2Z4dFpTbDV1NzBhZ2EwejNGTzUwRDhZcFZ3dHJXWFRweUNaSmVMcHMtWV9la0k2UFV5clpnWEdYZmZSZmFtSHFWZXlOWF9VeGZmTVREdERJRDhqTXl3?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">2</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxQbFVVRE96THVwZVV1eDI2cGR6U3FaWUs5WTZaejJ2dWFibjBIQzRROENVVjJpeW1sNFZxX1dsYzJMWmEyODlwWENxNE1TWGxyNmN5MnBQcklXN0VEZjlYY2l0bjB5c1h5V2hrdC1HLVRwWi1zYzBfLVBLbFFuWFRiS2d4Z9IBlwFBVV95cUxPdUVsSHlUeGNZSGtWZE92MjZyUnoyNWxmdDFJZ2Nja2ZHMUpmLVBsbFRmWVdVSWh1UHBGdlBtcHVHQy12VFFFVUNaUGE1UnpLSVdjZnpoTEFiT3hiTExIUTZSc2pLMFJITjNySzVsbTAyRXFyQUtnREFGQjA3QVRBMW8tN0wtVGpkLWtFX0xERHljQTJUT3NJ?oc=5" target="_blank" rel="noopener">&#x27;일본전 지고 8강 진출 vs 일본전 이기고 조 3위&#x27; → 짓궂은 질문에 류지현 감독이 웃었다 - 조선일보</a>
+                        </div>
+                        <div class="orig-body">&#x27;일본전 지고 8강 진출 vs 일본전 이기고 조 3위&#x27; → 짓궂은 질문에 류지현 감독이 웃었다 조선일보</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">조선일보</span>
+                            <span class="orig-date">2026-02-06 03:04</span>
+                            <span class="orig-len">57자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxQbFVVRE96THVwZVV1eDI2cGR6U3FaWUs5WTZaejJ2dWFibjBIQzRROENVVjJpeW1sNFZxX1dsYzJMWmEyODlwWENxNE1TWGxyNmN5MnBQcklXN0VEZjlYY2l0bjB5c1h5V2hrdC1HLVRwWi1zYzBfLVBLbFFuWFRiS2d4Z9IBlwFBVV95cUxPdUVsSHlUeGNZSGtWZE92MjZyUnoyNWxmdDFJZ2Nja2ZHMUpmLVBsbFRmWVdVSWh1UHBGdlBtcHVHQy12VFFFVUNaUGE1UnpLSVdjZnpoTEFiT3hiTExIUTZSc2pLMFJITjNySzVsbTAyRXFyQUtnREFGQjA3QVRBMW8tN0wtVGpkLWtFX0xERHljQTJUT3NJ?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMigwFBVV95cUxQbFVVRE96THVwZVV1eDI2cGR6U3FaWUs5WTZaejJ2dWFibjBIQzRROENVVjJpeW1sNFZxX1dsYzJMWmEyODlwWENxNE1TWGxyNmN5MnBQcklXN0VEZjlYY2l0bjB5c1h5V2hrdC1HLVRwWi1zYzBfLVBLbFFuWFRiS2d4Z9IBlwFBVV95cUxPdUVsSHlUeGNZSGtWZE92MjZyUnoyNWxmdDFJZ2Nja2ZHMUpmLVBsbFRmWVdVSWh1UHBGdlBtcHVHQy12VFFFVUNaUGE1UnpLSVdjZnpoTEFiT3hiTExIUTZSc2pLMFJITjNySzVsbTAyRXFyQUtnREFGQjA3QVRBMW8tN0wtVGpkLWtFX0xERHljQTJUT3NJ?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">3</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTFB6QksxRVhzQzFUX015bGNGWlFrWkNkQnRBVmJ5cEd0UHpCSTBNQTlyd0RZZWMxUktqVFRhX2JYX2F1QXJhZlpxM0hLeVkzd2Y0b0tOZg?oc=5" target="_blank" rel="noopener">일본 집단폭행 한국인 &quot;안 도와줬다&quot;...억울한 영사관 ‘5851자 해명’ - JTBC</a>
+                        </div>
+                        <div class="orig-body">일본 집단폭행 한국인 &quot;안 도와줬다&quot;...억울한 영사관 ‘5851자 해명’ JTBC</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">JTBC</span>
+                            <span class="orig-date">2026-02-06 02:20</span>
+                            <span class="orig-len">46자</span>
+                            
+                            <a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTFB6QksxRVhzQzFUX015bGNGWlFrWkNkQnRBVmJ5cEd0UHpCSTBNQTlyd0RZZWMxUktqVFRhX2JYX2F1QXJhZlpxM0hLeVkzd2Y0b0tOZg?oc=5" target="_blank" rel="noopener" class="orig-link" title="https://news.google.com/rss/articles/CBMiVEFVX3lxTFB6QksxRVhzQzFUX015bGNGWlFrWkNkQnRBVmJ5cEd0UHpCSTBNQTlyd0RZZWMxUktqVFRhX2JYX2F1QXJhZlpxM0hLeVkzd2Y0b0tOZg?oc=5">원문</a>
+                        </div>
+                    </div>
+                    
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">4</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://imnews.imbc.com/replay/2026/nwtoday/article/6799370_37012.html" target="_blank" rel="noopener">이 &quot;평당 3억 말 되나‥수도권 &#x27;몰빵&#x27; 한계&quot;</a>
+                        </div>
+                        <div class="orig-body">◀ 앵커 
+그간 대한민국은 &quot;&#x27;몰빵&#x27; 전략을 구사했는데 이제는 한계를 맞았다&quot;며 서울 부동산 문제도 그 결과라고 지적했는데요.
+적극적인 지방균형정책을 통해서, 문제를 근본적으로 해결해야 한다고 강조했습니다.
+정상빈 기자의 보도입니다.
+◀ 리포트 
+그동안 대한민국의 주요 성장 전략이었던 &#x27;수도권 집중&#x27;은 이제 한계를 맞았다고 말했습니다.
+[이재명 대통령]
+&quot;지난 시기에 자원과 기회가 부족했기 때문에 모든 자원과 기회를 한쪽으로 몰아서 소위 몰빵하는 올인하는 전략을 구사했습니다.&quot;
+그 부작용 중 하나로, 서울의 부동산 가격을 지적했습니...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">MBC</span>
+                            <span class="orig-date">2026-02-07 07:12</span>
+                            <span class="orig-len">1169자</span>
+                            <span class="orig-img-count">1장</span>
+                            <a href="https://imnews.imbc.com/replay/2026/nwtoday/article/6799370_37012.html" target="_blank" rel="noopener" class="orig-link" title="https://imnews.imbc.com/replay/2026/nwtoday/article/6799370_37012.html">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://image.imnews.imbc.com/replay/2026/nwtoday/article/__icsFiles/afieldfile/2026/02/07/today_20260207_071147_1_25_Large.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                <div class="orig-card">
+                    <div class="orig-num">5</div>
+                    <div class="orig-content">
+                        <div class="orig-title">
+                            <a href="https://www.g-enews.com/view.php?ud=202602070742422986f4f9a46d5b_1" target="_blank" rel="noopener">일본·미국, 가스발전·심수항 투자 공조 착수…AI 데이터센터 전력망 ...</a>
+                        </div>
+                        <div class="orig-body">미국 AI 데이터센터 전력 수요와 가스발전 협력
+일본과 미국은 최근 급증하는 AI 데이터센터 전력 수요를 안정적으로 충당하기 위해 가스 발전을 핵심 해법으로 설정했다. 1단계 핵심 사업은 약 6조엔 규모의 가스 발전 프로젝트로, 설계와 건설은 소프트뱅크가 주도한다. 이 발전 설비는 미국 내 대형 데이터센터에 전력을 공급하는 것을 목표로 하며, 인공지능 연산 수요 폭증으로 전력 부족이 현실화되는 상황에 대응하기 위한 전략적 인프라로 평가된다. 미국 중전기기 업체 GE버노바도 잠재적 참여 기업으로 거론되며, 발전 설비와 전력 시스템 구...</div>
+                        <div class="orig-meta">
+                            <span class="orig-source">g-enews.com</span>
+                            <span class="orig-date">2026-02-07 07:46</span>
+                            <span class="orig-len">959자</span>
+                            <span class="orig-img-count">3장</span>
+                            <a href="https://www.g-enews.com/view.php?ud=202602070742422986f4f9a46d5b_1" target="_blank" rel="noopener" class="orig-link" title="https://www.g-enews.com/view.php?ud=202602070742422986f4f9a46d5b_1">원문</a>
+                        </div>
+                    </div>
+                    <img class="orig-thumb" src="https://nimage.g-enews.com/phpwas/restmb_allidxmake.php?idx=5&amp;simg=2026020705160804945f4f9a46d5b12456134167.jpg" alt="" onerror="this.style.display='none'">
+                </div>
+                    </div>
+                </div>
+
+                <div class="panel-arrow">→</div>
+
+                <div class="panel panel-right">
+                    <div class="panel-title">
+                        <span class="dot dot-green"></span> 생성된 뉴스
+                    </div>
+                    <div class="gen-card">
+                        <h3>애착인형과 눈물의 이별, &quot;대체자 없다&quot; 대만,일본전 누구? 무거워진 빅게임 피처의 어깨 - 조선일보</h3>
+                        
+                        <div class="gen-body">
+                            <p>미국 AI 데이터센터 전력 수요와 가스발전 협력
+일본과 미국은 최근 급증하는 AI 데이터센터 전력 수요를 안정적으로 충당하기 위해 가스 발전을 핵심 해법으로 설정했다. 일본은 2029년까지 3년간 단계적으로 투자를 집행하기로 했으며 이번 1단계 사업은 그 첫 가시적 성과로 평가된다.</p>
+<p>애착인형과 눈물의 이별, &quot;대체자 없다&quot; 대만,일본전 누구? &#x27;일본전 지고 8강 진출 vs 일본전 이기고 조 3위&#x27; → 짓궂은 질문에 류지현 감독이 웃었다 조선일보. 또한 일본 집단폭행 한국인 &quot;안 도와줬다&quot;...억울한 영사관 ‘5851자 해명’ JTBC. ◀ 앵커 
+그간 대한민국은 &quot;&#x27;몰빵&#x27; 전략을 구사했는데 이제는 한계를 맞았다&quot;며 서울 부동산 문제도 그 결과라고 지적했는데요. 아울러 전화 02-784-4000
+▷ 이메일 
+▷ 카카오톡 @mbc제보
+뉴스투데이
+정상빈
+이 &quot;평당 3억 말 되나‥수도권 &#x27;몰빵&#x27; 한계&quot;
+이 &quot;평당 3억 말 되나‥수도권 &#x27;몰빵&#x27; 한계&quot;
+입력
+2026-02-07 07:12
+|
+수정 2026-02-07 07:28. ◀ 리포트 
+그동안 대한민국의 주요 성장 전략이었던 &#x27;수도권 집중&#x27;은 이제 한계를 맞았다고 말했습니다.</p>
+<p>투자구조와 정상회담 일정
+미일 양국은 가스 발전, 심수항, 기타 전략 프로젝트를 추진하기 위해 공동 특수목적법인을 설립할 계획이다. 경제산업상과 미국 상무장관이 실무 조율을 진행 중이며, 최종 결정은 3월로 예정된 미일 정상회담을 전후해 내려질 전망이다.</p>
+
+                        </div>
+                        <div class="gen-inline-image"><img src="https://image.imnews.imbc.com/replay/2026/nwtoday/article/__icsFiles/afieldfile/2026/02/07/today_20260207_071147_1_25_Large.jpg" alt="" onerror="this.parentElement.style.display='none'"></div>
+                        
+                        <div class="gen-footer">
+                            출처: <a href="https://www.g-enews.com/view.php?ud=202602070742422986f4f9a46d5b_1" target="_blank" rel="noopener" class="tag tag-link">g-enews.com</a> <a href="https://news.google.com/rss/articles/CBMigwFBVV95cUxQbFVVRE96THVwZVV1eDI2cGR6U3FaWUs5WTZaejJ2dWFibjBIQzRROENVVjJpeW1sNFZxX1dsYzJMWmEyODlwWENxNE1TWGxyNmN5MnBQcklXN0VEZjlYY2l0bjB5c1h5V2hrdC1HLVRwWi1zYzBfLVBLbFFuWFRiS2d4Z9IBlwFBVV95cUxPdUVsSHlUeGNZSGtWZE92MjZyUnoyNWxmdDFJZ2Nja2ZHMUpmLVBsbFRmWVdVSWh1UHBGdlBtcHVHQy12VFFFVUNaUGE1UnpLSVdjZnpoTEFiT3hiTExIUTZSc2pLMFJITjNySzVsbTAyRXFyQUtnREFGQjA3QVRBMW8tN0wtVGpkLWtFX0xERHljQTJUT3NJ?oc=5" target="_blank" rel="noopener" class="tag tag-link">조선일보</a> <a href="https://news.google.com/rss/articles/CBMiVEFVX3lxTFB6QksxRVhzQzFUX015bGNGWlFrWkNkQnRBVmJ5cEd0UHpCSTBNQTlyd0RZZWMxUktqVFRhX2JYX2F1QXJhZlpxM0hLeVkzd2Y0b0tOZg?oc=5" target="_blank" rel="noopener" class="tag tag-link">JTBC</a> <a href="https://imnews.imbc.com/replay/2026/nwtoday/article/6799370_37012.html" target="_blank" rel="noopener" class="tag tag-link">MBC</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    <footer class="page-footer">
+        NewsCollector &copy; 2026
+    </footer>
+</body>
+</html>

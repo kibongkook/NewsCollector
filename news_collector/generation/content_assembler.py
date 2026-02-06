@@ -65,6 +65,7 @@ class AssembledContent:
     source_count: int
     sources: List[str]  # 출처 목록
     images: List[str] = field(default_factory=list)  # 이미지 URL 목록
+    news_type: str = "standard"  # 뉴스 유형 (standard/visual/data)
 
     def to_dict(self) -> Dict[str, Any]:
         """템플릿 렌더링용 딕셔너리 변환"""
@@ -233,16 +234,23 @@ class NewsTypeDetector:
         conds = conditions.get("conditions", {})
 
         if news_type == NewsType.VISUAL:
-            # 이미지 수 체크
-            min_images = conds.get("image_count_min", 2)
+            # 이미지 수 체크 (강한 신호)
+            min_images = conds.get("image_count_min", 3)
             if image_count >= min_images:
                 return True
 
-            # 키워드 체크
-            keywords = conds.get("keywords", [])
-            threshold = conds.get("keyword_match_threshold", 1)
-            matched = sum(1 for kw in keywords if kw in text)
-            if matched >= threshold:
+            # 고확신 키워드 체크 (명백한 비주얼 콘텐츠)
+            high_keywords = conds.get("high_confidence_keywords", [])
+            high_threshold = conds.get("high_confidence_threshold", 1)
+            high_matched = sum(1 for kw in high_keywords if kw in text)
+            if high_matched >= high_threshold:
+                return True
+
+            # 저확신 키워드 체크 (일반적 단어 - 여러 개 매칭 필요)
+            low_keywords = conds.get("low_confidence_keywords", [])
+            low_threshold = conds.get("low_confidence_threshold", 3)
+            low_matched = sum(1 for kw in low_keywords if kw in text)
+            if low_matched >= low_threshold:
                 return True
 
         elif news_type == NewsType.DATA:
@@ -260,10 +268,11 @@ class NewsTypeDetector:
                 if matched >= threshold:
                     return True
 
-            # 키워드만으로도 데이터형 가능
+            # 키워드만으로도 데이터형 가능 (threshold 설정 기반)
             keywords = conds.get("keywords", [])
+            kw_threshold = conds.get("keyword_threshold", 3)
             matched_kw = sum(1 for kw in keywords if kw in text)
-            if matched_kw >= 2:
+            if matched_kw >= kw_threshold:
                 return True
 
         return False
@@ -466,15 +475,16 @@ class ContentAssembler:
             return NewsType.STANDARD
 
         # 대표 뉴스의 제목/본문/이미지로 판단
-        primary = source_news[0]
         combined_text = " ".join(n.body or "" for n in source_news[:3])
         combined_title = " ".join(n.title or "" for n in source_news[:3])
+        # 기사당 평균 이미지 수 사용 (합계 사용 시 다중 기사에서 항상 visual 감지됨)
         total_images = sum(len(n.image_urls or []) for n in source_news)
+        avg_images = total_images / len(source_news) if source_news else 0
 
         return self.type_detector.detect(
             text=combined_text,
             title=combined_title,
-            image_count=total_images,
+            image_count=int(avg_images),
         )
 
     def assemble(
@@ -523,8 +533,8 @@ class ContentAssembler:
             unique_sentences, key=lambda s: s.importance, reverse=True
         )
 
-        # 4. 포맷별 섹션 구성
-        sections = self._build_sections(sorted_sentences, format)
+        # 4. 포맷별 섹션 구성 (뉴스 유형 반영)
+        sections = self._build_sections(sorted_sentences, format, detected_type)
 
         # 5. 출처 정리
         sources = list(set(
@@ -555,6 +565,7 @@ class ContentAssembler:
             source_count=len(sources),
             sources=sources,
             images=images,
+            news_type=detected_type,
         )
 
     def _enrich_news_content(
@@ -634,7 +645,13 @@ class ContentAssembler:
 
             for idx, sent in enumerate(raw_sentences):
                 sent = sent.strip()
+                # 원문 불릿/기호 접두어 제거
+                sent = re.sub(r'^[○●◎▶▷►◆◇■□★☆·•※→\-]\s*', '', sent).strip()
                 if len(sent) < 10:  # 너무 짧은 문장 제외
+                    continue
+
+                # 저작권/면책/광고 문장 필터링
+                if self._is_boilerplate_sentence(sent):
                     continue
 
                 # 불완전한 문장 필터링 (접속어미로 끝나는 문장)
@@ -822,6 +839,52 @@ class ContentAssembler:
 
         return False
 
+    # 저작권/면책/광고/바이라인 문장 판별용 패턴
+    _BOILERPLATE_PATTERNS = [
+        # 저작권/면책
+        re.compile(r'저작권자?\s*[\(（]?[cC©ⓒ][\)）]?'),
+        re.compile(r'무단\s*(전재|복제|배포)'),
+        re.compile(r'Copyright\s*[©ⓒ]', re.IGNORECASE),
+        re.compile(r'All\s*[Rr]ights\s*[Rr]eserved'),
+        re.compile(r'<저작권자'),
+        re.compile(r'\[ⓒ\s'),
+        re.compile(r'재배포\s*금지'),
+        re.compile(r'기사\s*제공\s*[:：]'),
+        re.compile(r'출처\s*[:：]\s*\S+\s*$'),
+        # 기자 바이라인 (문장 시작 또는 문장 끝)
+        re.compile(r'^\[.{2,20}(기자|특파원|팀)\]'),
+        re.compile(r'^\[.{2,10}=.{2,10}\]\s*.{2,10}\s*(기자|특파원)'),
+        re.compile(r'^\(.{2,10}=.{2,20}\)\s*.{2,20}\s*(기자|특파원|기자\s*=)'),
+        re.compile(r'.{2,20}[=＝].{2,20}(기자|특파원)'),
+        re.compile(r'(기자|특파원|앵커|리포터|진행자)\s*[:：]'),
+        # 사진 캡션 (파이프 구분자 또는 [사진=출처])
+        re.compile(r'^\|.*\|$'),
+        re.compile(r'\[사진[=:].{2,30}\]'),
+        # 광고/구독 유도
+        re.compile(r'(구독|좋아요|공유).*(눌러|클릭|해주)'),
+        # 관련 기사 헤드라인 (언론사 이름으로 끝남)
+        re.compile(r'.{10,}(뉴스1|연합뉴스|조선일보|중앙일보|한국일보|경향신문|동아일보|매일경제|한국경제|머니투데이|뉴시스|YTN|KBS|MBC|SBS|JTBC|이데일리|파이낸셜뉴스|서울신문|세계일보|문화일보|아시아경제|헤럴드경제|디지털타임스|전자신문)$'),
+        # 도메인 포함 문장 (관련 링크)
+        re.compile(r'\w+\.(com|co\.kr|net|or\.kr|go\.kr)'),
+        # 타임스탬프 (입력/수정 날짜시간)
+        re.compile(r'(입력|수정|작성|게재|발행)\s*[:：]?\s*\d{4}[-./]\d{1,2}[-./]\d{1,2}'),
+        # 연락처 (전화/팩스/이메일)
+        re.compile(r'(전화|팩스|이메일|메일|Tel|Fax|Email)\s*[:：]?\s*[\d\-\(\)]+'),
+        # 저작권 심볼
+        re.compile(r'[ⓒⒸ©]\s*.{2,20}(닷컴|뉴스|일보|미디어|방송)'),
+        # 방송 프로그램 마커
+        re.compile(r'^[◀◁◀◀▶▷]\s*(앵커|기자|리포터|리포트|진행|출연)'),
+        # 프로그램 이름 + 기자/앵커 이름
+        re.compile(r'(뉴스투데이|뉴스9|뉴스데스크|아침뉴스|저녁뉴스)\s+.{2,10}$'),
+    ]
+
+    def _is_boilerplate_sentence(self, sentence: str) -> bool:
+        """저작권/면책/광고 문장인지 확인"""
+        for pattern in self._BOILERPLATE_PATTERNS:
+            if pattern.search(sentence):
+                return True
+        return False
+
     def _jaccard_similarity(self, text1: str, text2: str) -> float:
         """Jaccard 유사도 계산"""
         words1 = set(text1.split())
@@ -884,16 +947,64 @@ class ContentAssembler:
 
         return " ".join(result)
 
+    def _get_primary_source(self, sentences: List[ClassifiedSentence]) -> Optional[str]:
+        """가장 관련도 높은 소스 기사 ID 반환 (교차 기사 혼합 방지)
+
+        키워드 매칭과 중요도를 합산하여 가장 관련성 높은 소스를 식별합니다.
+        이를 통해 본문에서 무관한 기사의 문장이 섞이는 것을 방지합니다.
+        """
+        if not sentences:
+            return None
+
+        source_scores: Dict[str, float] = {}
+        for s in sentences:
+            sid = s.source_news_id
+            score = s.importance + len(s.matched_keywords) * 0.3
+            source_scores[sid] = source_scores.get(sid, 0.0) + score
+
+        if source_scores:
+            return max(source_scores, key=lambda x: source_scores[x])
+        return None
+
+    def _source_preferred_select(
+        self,
+        candidates: List[ClassifiedSentence],
+        primary_source: Optional[str],
+        max_count: int,
+    ) -> List[ClassifiedSentence]:
+        """Primary source 문장 우선 선택 (교차 기사 혼합 방지)
+
+        primary source의 문장을 먼저 채우고, 부족한 경우에만
+        secondary source에서 보충합니다.
+        """
+        if not primary_source or not candidates:
+            return candidates[:max_count]
+
+        primary = [s for s in candidates if s.source_news_id == primary_source]
+        secondary = [s for s in candidates if s.source_news_id != primary_source]
+
+        result = primary[:max_count]
+        remaining = max_count - len(result)
+        if remaining > 0:
+            result.extend(secondary[:remaining])
+        return result
+
     def _build_sections(
         self,
         sentences: List[ClassifiedSentence],
         format: NewsFormat,
+        news_type: Optional[str] = None,
     ) -> Dict[str, str]:
-        """포맷별 섹션 구성"""
+        """포맷별 섹션 구성 (뉴스 유형 반영)"""
         format_name = format.value.lower()
         spec = self.config.get_format_spec(format_name)
 
         if format == NewsFormat.STRAIGHT:
+            # 뉴스 유형별 빌더 분기
+            if news_type == NewsType.VISUAL:
+                return self._build_visual_straight(sentences, spec)
+            elif news_type == NewsType.DATA:
+                return self._build_data_straight(sentences, spec)
             return self._build_straight(sentences, spec)
         elif format == NewsFormat.BRIEF:
             return self._build_brief(sentences, spec)
@@ -916,7 +1027,7 @@ class ContentAssembler:
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
     ) -> Dict[str, str]:
-        """스트레이트 뉴스 구성 (400-800자)"""
+        """스트레이트 뉴스 구성 (400-800자, 소스 기사 일관성 보장)"""
         min_length = spec.get("min_length", 400)
         max_length = spec.get("max_length", 800)
         sections_spec = spec.get("sections", {})
@@ -941,52 +1052,62 @@ class ContentAssembler:
 
         used_texts: Set[str] = set()
 
-        # 리드: 우선 역할 문장 선택
-        lead_sentences = [s for s in sentences if s.role in lead_roles][:lead_max]
-        # 최소 문장 수 확보
+        # ★ 소스 기사 관련도 기반 우선순위 (교차 기사 혼합 방지)
+        primary_source = self._get_primary_source(sentences)
+
+        # 리드: 우선 역할 + primary source 우선
+        lead_candidates = [s for s in sentences if s.role in lead_roles]
+        lead_sentences = self._source_preferred_select(lead_candidates, primary_source, lead_max)
         if len(lead_sentences) < lead_min:
             additional = [s for s in sentences if s.text not in {ls.text for ls in lead_sentences}]
-            lead_sentences.extend(additional[:lead_min - len(lead_sentences)])
+            lead_sentences.extend(
+                self._source_preferred_select(additional, primary_source, lead_min - len(lead_sentences))
+            )
         lead = " ".join(s.text for s in lead_sentences) if lead_sentences else ""
         if not lead and sentences:
             lead = sentences[0].text
             used_texts.add(sentences[0].text)
         used_texts.update(s.text for s in lead_sentences)
 
-        # 본문: 우선 역할 문장 선택
-        body_sentences = [
+        # 본문: 우선 역할 + primary source 우선
+        body_candidates = [
             s for s in sentences
             if s.role in body_roles and s.text not in used_texts
-        ][:body_max]
-        # 최소 문장 수 확보
+        ]
+        body_sentences = self._source_preferred_select(body_candidates, primary_source, body_max)
         if len(body_sentences) < body_min:
             additional = [
                 s for s in sentences
                 if s.text not in used_texts and s.text not in {bs.text for bs in body_sentences}
             ]
-            body_sentences.extend(additional[:body_min - len(body_sentences)])
+            body_sentences.extend(
+                self._source_preferred_select(additional, primary_source, body_min - len(body_sentences))
+            )
         body = " ".join(s.text for s in body_sentences)
         used_texts.update(s.text for s in body_sentences)
 
-        # 마무리: 우선 역할 문장 선택
-        closing_sentences = [
+        # 마무리: 우선 역할 + primary source 우선
+        closing_candidates = [
             s for s in sentences
             if s.role in closing_roles and s.text not in used_texts
-        ][:closing_max]
-        # 최소 문장 수 확보
+        ]
+        closing_sentences = self._source_preferred_select(closing_candidates, primary_source, closing_max)
         if len(closing_sentences) < closing_min:
             additional = [
                 s for s in sentences
                 if s.text not in used_texts and s.text not in {cs.text for cs in closing_sentences}
             ]
-            closing_sentences.extend(additional[:closing_min - len(closing_sentences)])
+            closing_sentences.extend(
+                self._source_preferred_select(additional, primary_source, closing_min - len(closing_sentences))
+            )
         closing = " ".join(s.text for s in closing_sentences)
         used_texts.update(s.text for s in closing_sentences)
 
-        # 전체 최소 길이 충족 확인 - 부족하면 본문에 문장 추가
+        # 전체 최소 길이 충족 확인 - 부족하면 본문에 primary source 문장 추가
         current_text = f"{lead} {body} {closing}".strip()
         if len(current_text) < min_length:
             remaining = [s for s in sentences if s.text not in used_texts]
+            remaining = self._source_preferred_select(remaining, primary_source, len(remaining))
             for sent in remaining:
                 if len(current_text) >= min_length:
                     break
@@ -1230,6 +1351,162 @@ class ContentAssembler:
             "closing": closing,
         }
 
+    def _build_visual_straight(
+        self,
+        sentences: List[ClassifiedSentence],
+        spec: Dict[str, Any],
+    ) -> Dict[str, str]:
+        """비주얼 뉴스 구성 (짧은 본문 + 이미지 중심, 소스 일관성 보장)
+
+        news_format_spec.yaml의 visual 섹션 규격 적용:
+        - 전체 200-500자 (일반형보다 짧음)
+        - 리드: 상황 설명 (누가/어디서/언제)
+        - 본문: 장면/내용 묘사
+        - 마무리: 간결한 1문장
+        """
+        # visual 타입 고유 길이 (news_format_spec에서 로드)
+        visual_spec = self.format_spec.get_news_type_spec(NewsType.VISUAL)
+        length = visual_spec.get("length", {})
+        min_length = length.get("min", 200)
+        max_length = length.get("max", 500)
+
+        primary_source = self._get_primary_source(sentences)
+        used_texts: Set[str] = set()
+
+        # 리드: 상황 설명 (1-2문장, lead/fact/background 우선)
+        lead_candidates = [s for s in sentences if s.role in ("lead", "fact", "background")]
+        lead_sentences = self._source_preferred_select(lead_candidates, primary_source, 2)
+        if not lead_sentences and sentences:
+            lead_sentences = [sentences[0]]
+        lead = " ".join(s.text for s in lead_sentences)
+        used_texts.update(s.text for s in lead_sentences)
+
+        # 본문: 장면/내용 묘사 (2-3문장)
+        body_candidates = [s for s in sentences if s.text not in used_texts]
+        body_sentences = self._source_preferred_select(body_candidates, primary_source, 3)
+        body = " ".join(s.text for s in body_sentences)
+        used_texts.update(s.text for s in body_sentences)
+
+        # 마무리: 간결 (1문장)
+        closing_candidates = [
+            s for s in sentences
+            if s.role in ("outlook", "implication") and s.text not in used_texts
+        ]
+        closing_sentences = self._source_preferred_select(closing_candidates, primary_source, 1)
+        if not closing_sentences:
+            remaining = [s for s in sentences if s.text not in used_texts]
+            closing_sentences = remaining[:1]
+        closing = " ".join(s.text for s in closing_sentences)
+
+        # 최소 길이 확보
+        current = f"{lead} {body} {closing}".strip()
+        if len(current) < min_length:
+            remaining = [s for s in sentences if s.text not in used_texts]
+            remaining = self._source_preferred_select(remaining, primary_source, len(remaining))
+            for sent in remaining:
+                if len(current) >= min_length:
+                    break
+                body += " " + sent.text
+                current = f"{lead} {body} {closing}".strip()
+
+        # 최대 길이 제한
+        if len(current) > max_length:
+            body_parts = body.split(". ")
+            while len(current) > max_length and len(body_parts) > 1:
+                body_parts.pop()
+                body = ". ".join(body_parts)
+                if body and not body.endswith("."):
+                    body += "."
+                current = f"{lead} {body} {closing}".strip()
+
+        return {
+            "lead": lead.strip(),
+            "body": self._add_connectors(body.strip(), "body"),
+            "closing": closing.strip(),
+        }
+
+    def _build_data_straight(
+        self,
+        sentences: List[ClassifiedSentence],
+        spec: Dict[str, Any],
+    ) -> Dict[str, str]:
+        """데이터 뉴스 구성 (수치/통계 중심, 소스 일관성 보장)
+
+        news_format_spec.yaml의 data 섹션 규격 적용:
+        - 전체 300-600자
+        - 리드: 핵심 수치 포함 문장 우선
+        - 본문: 분석/배경 + 통계 포함 문장 우선
+        - 마무리: 전망/시사점
+        """
+        # data 타입 고유 길이 (news_format_spec에서 로드)
+        data_spec = self.format_spec.get_news_type_spec(NewsType.DATA)
+        length = data_spec.get("length", {})
+        min_length = length.get("min", 300)
+        max_length = length.get("max", 600)
+
+        primary_source = self._get_primary_source(sentences)
+        used_texts: Set[str] = set()
+
+        # 리드: 핵심 수치 포함 문장 우선 (1-2문장)
+        stat_leads = [s for s in sentences if s.role in ("statistic", "lead") and s.has_number]
+        if not stat_leads:
+            stat_leads = [s for s in sentences if s.role in ("lead", "fact")]
+        lead_sentences = self._source_preferred_select(stat_leads, primary_source, 2)
+        if not lead_sentences and sentences:
+            lead_sentences = [sentences[0]]
+        lead = " ".join(s.text for s in lead_sentences)
+        used_texts.update(s.text for s in lead_sentences)
+
+        # 본문: 분석/배경 (3-5문장, 숫자 포함 문장 우선)
+        body_candidates = [s for s in sentences if s.text not in used_texts]
+        with_numbers = [s for s in body_candidates if s.has_number]
+        without_numbers = [s for s in body_candidates if not s.has_number]
+        body_pool = (
+            self._source_preferred_select(with_numbers, primary_source, 4) +
+            self._source_preferred_select(without_numbers, primary_source, 4)
+        )
+        body_sentences = body_pool[:5]
+        body = " ".join(s.text for s in body_sentences)
+        used_texts.update(s.text for s in body_sentences)
+
+        # 마무리: 전망/시사점 (1-2문장)
+        closing_candidates = [
+            s for s in sentences
+            if s.role in ("outlook", "implication") and s.text not in used_texts
+        ]
+        closing_sentences = self._source_preferred_select(closing_candidates, primary_source, 2)
+        if not closing_sentences:
+            remaining = [s for s in sentences if s.text not in used_texts]
+            closing_sentences = remaining[:1]
+        closing = " ".join(s.text for s in closing_sentences)
+
+        # 최소 길이 확보
+        current = f"{lead} {body} {closing}".strip()
+        if len(current) < min_length:
+            remaining = [s for s in sentences if s.text not in used_texts]
+            remaining = self._source_preferred_select(remaining, primary_source, len(remaining))
+            for sent in remaining:
+                if len(current) >= min_length:
+                    break
+                body += " " + sent.text
+                current = f"{lead} {body} {closing}".strip()
+
+        # 최대 길이 제한
+        if len(current) > max_length:
+            body_parts = body.split(". ")
+            while len(current) > max_length and len(body_parts) > 2:
+                body_parts.pop()
+                body = ". ".join(body_parts)
+                if body and not body.endswith("."):
+                    body += "."
+                current = f"{lead} {body} {closing}".strip()
+
+        return {
+            "lead": lead.strip(),
+            "body": self._add_connectors(body.strip(), "body"),
+            "closing": closing.strip(),
+        }
+
     def _empty_content(self) -> AssembledContent:
         """빈 콘텐츠 반환"""
         return AssembledContent(
@@ -1249,8 +1526,8 @@ class ContentAssembler:
         if not img_url.startswith('http'):
             return False
 
-        # 플레이스홀더 제외
-        if '{{' in img_url or '}}' in img_url or '{%' in img_url:
+        # 플레이스홀더/템플릿 변수 제외
+        if '{{' in img_url or '}}' in img_url or '{%' in img_url or '${' in img_url:
             return False
 
         url_lower = img_url.lower()
@@ -1281,8 +1558,9 @@ class ContentAssembler:
             'thumb_s', 'thumb_xs', '_s.', '_xs.', '_t.',
             'small_', '_small', 'mini_', '_mini', 'thumbnail_small', '.thumb.',
             '/feed/', 'feed_', '_feed', '_thumb', '/thumb/',
-            # 기자/관련기사 이미지
+            # 기자/관련기사/멤버 이미지
             'journalist', 'reporter', 'byline', 'author',
+            '/member/', 'member_', '_member',
             'related_', '_related', 'recommend', 'sidebar',
             # 플레이어/비디오 UI
             'player', 'video_', '_video', 'play_', '_play',
@@ -1291,6 +1569,11 @@ class ContentAssembler:
             'pixel', 'tracker', 'spacer', 'blank', 'transparent',
             '1x1', '1px', 'sprite', 'emoji', 'avatar', 'profile',
             'nav_', 'menu_', 'comment', 'reply', 'like', 'dislike',
+            # UI 장식/불릿/아이콘 이미지
+            'bul_', '_bul', 'bullet', 'dot_', 'arr_', 'arrow_',
+            'ico_', '_ico', 'g_circle', 'circle_',
+            # 극소 썸네일 경로
+            'thumbnail/custom/', '_120.jpg', '_120.png',
         ]
 
         for pattern in exclude_patterns:
@@ -1303,6 +1586,14 @@ class ContentAssembler:
         if size_match:
             width, height = int(size_match.group(1)), int(size_match.group(2))
             if width < 150 or height < 100:
+                return False
+
+        # 쿼리스트링 크기 파라미터 체크 (w=105&h=67 등)
+        qs_w_match = re.search(r'[?&]w=(\d+)', url_lower)
+        qs_h_match = re.search(r'[?&]h=(\d+)', url_lower)
+        if qs_w_match and qs_h_match:
+            w, h = int(qs_w_match.group(1)), int(qs_h_match.group(1))
+            if w < 150 or h < 100:
                 return False
 
         return True

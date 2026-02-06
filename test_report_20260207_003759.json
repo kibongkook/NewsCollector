@@ -1,0 +1,181 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 100.0,
+    "avg_char_count": 771.6,
+    "avg_generation_time_ms": 471.8,
+    "issue_counts": {},
+    "type_distribution": {
+      "visual": 5
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "부동산",
+      "timestamp": "2026-02-07T00:36:47.610063",
+      "search_count": 5,
+      "search_time_ms": 1183,
+      "generation_success": true,
+      "generation_time_ms": 666,
+      "generated_char_count": 757,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 56,
+        "summary_length": 129,
+        "body_length": 757,
+        "total_length": 813,
+        "issues": []
+      },
+      "images": {
+        "total_count": 9,
+        "valid_count": 9,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "축구",
+      "timestamp": "2026-02-07T00:37:03.959765",
+      "search_count": 5,
+      "search_time_ms": 1161,
+      "generation_success": true,
+      "generation_time_ms": 351,
+      "generated_char_count": 723,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 56,
+        "summary_length": 139,
+        "body_length": 723,
+        "total_length": 779,
+        "issues": []
+      },
+      "images": {
+        "total_count": 6,
+        "valid_count": 6,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "외교",
+      "timestamp": "2026-02-07T00:37:19.877062",
+      "search_count": 5,
+      "search_time_ms": 4391,
+      "generation_success": true,
+      "generation_time_ms": 438,
+      "generated_char_count": 812,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 36,
+        "summary_length": 128,
+        "body_length": 812,
+        "total_length": 848,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "여행",
+      "timestamp": "2026-02-07T00:37:28.055292",
+      "search_count": 5,
+      "search_time_ms": 1054,
+      "generation_success": true,
+      "generation_time_ms": 356,
+      "generated_char_count": 826,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 24,
+        "summary_length": 97,
+        "body_length": 826,
+        "total_length": 850,
+        "issues": []
+      },
+      "images": {
+        "total_count": 9,
+        "valid_count": 9,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "선거",
+      "timestamp": "2026-02-07T00:37:44.951765",
+      "search_count": 5,
+      "search_time_ms": 1513,
+      "generation_success": true,
+      "generation_time_ms": 548,
+      "generated_char_count": 740,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 99,
+        "body_length": 740,
+        "total_length": 788,
+        "issues": []
+      },
+      "images": {
+        "total_count": 6,
+        "valid_count": 6,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

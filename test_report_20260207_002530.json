@@ -1,0 +1,185 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 4,
+    "failed_tests": 1,
+    "avg_score": 75.0,
+    "avg_char_count": 250.5,
+    "avg_generation_time_ms": 393.75,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 3,
+      "NO_SEARCH_RESULTS": 1,
+      "NOT_ENOUGH_IMAGES_FOR_VISUAL": 1
+    },
+    "type_distribution": {
+      "standard": 1,
+      "data": 2,
+      "visual": 1
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "국회",
+      "timestamp": "2026-02-07T00:25:17.956018",
+      "search_count": 5,
+      "search_time_ms": 1046,
+      "generation_success": true,
+      "generation_time_ms": 455,
+      "generated_char_count": 244,
+      "source_count": 5,
+      "score": 75.0,
+      "issues": [
+        "BODY_TOO_SHORT:244"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": false,
+        "title_length": 43,
+        "summary_length": 82,
+        "body_length": 244,
+        "total_length": 287,
+        "issues": [
+          "BODY_TOO_SHORT:244"
+        ]
+      },
+      "images": {
+        "total_count": 0,
+        "valid_count": 0,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "NFT",
+      "timestamp": "2026-02-07T00:25:19.959402",
+      "search_count": 5,
+      "search_time_ms": 791,
+      "generation_success": true,
+      "generation_time_ms": 263,
+      "generated_char_count": 274,
+      "source_count": 5,
+      "score": 75.0,
+      "issues": [
+        "BODY_TOO_SHORT:274"
+      ],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": false,
+        "title_length": 43,
+        "summary_length": 50,
+        "body_length": 274,
+        "total_length": 317,
+        "issues": [
+          "BODY_TOO_SHORT:274"
+        ]
+      },
+      "images": {
+        "total_count": 0,
+        "valid_count": 0,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "야구",
+      "timestamp": "2026-02-07T00:25:21.514197",
+      "search_count": 0,
+      "search_time_ms": 4622,
+      "generation_success": false,
+      "generation_time_ms": 0,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "NO_SEARCH_RESULTS"
+      ]
+    },
+    {
+      "test_id": 4,
+      "keyword": "금리",
+      "timestamp": "2026-02-07T00:25:26.637350",
+      "search_count": 5,
+      "search_time_ms": 862,
+      "generation_success": true,
+      "generation_time_ms": 327,
+      "generated_char_count": 223,
+      "source_count": 5,
+      "score": 75.0,
+      "issues": [
+        "BODY_TOO_SHORT:223"
+      ],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": false,
+        "title_length": 51,
+        "summary_length": 50,
+        "body_length": 223,
+        "total_length": 274,
+        "issues": [
+          "BODY_TOO_SHORT:223"
+        ]
+      },
+      "images": {
+        "total_count": 0,
+        "valid_count": 0,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "K팝",
+      "timestamp": "2026-02-07T00:25:28.328162",
+      "search_count": 5,
+      "search_time_ms": 905,
+      "generation_success": true,
+      "generation_time_ms": 530,
+      "generated_char_count": 261,
+      "source_count": 5,
+      "score": 75.0,
+      "issues": [
+        "NOT_ENOUGH_IMAGES_FOR_VISUAL:0"
+      ],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": false,
+        "title_length": 38,
+        "summary_length": 76,
+        "body_length": 261,
+        "total_length": 299,
+        "issues": [
+          "NOT_ENOUGH_IMAGES_FOR_VISUAL:0"
+        ]
+      },
+      "images": {
+        "total_count": 0,
+        "valid_count": 0,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

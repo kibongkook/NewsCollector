@@ -91,3 +91,113 @@ database:
   path: "./news.db"
   backup_enabled: true
   backup_interval_hours: 6
+
+# ===== 뉴스 생성 설정 =====
+generation:
+  search_limit: 5
+  api_delay_seconds: 0.5
+  scrape_min_body_length: 150
+  max_scrape_images: 3
+  default_format: "straight"
+  default_mode: "synthesis"
+
+  # 본문 길이 기준 (뉴스 유형별)
+  body_length:
+    standard:
+      min: 400
+      max: 800
+    visual:
+      min: 200
+      max: 500
+    data:
+      min: 300
+      max: 600
+
+# ===== 테스트 설정 =====
+test:
+  default_count: 10
+  keywords:
+    economy:
+      - "경제"
+      - "주식"
+      - "환율"
+      - "금리"
+      - "부동산"
+      - "증시"
+      - "코스피"
+      - "삼성전자"
+      - "반도체"
+      - "배터리"
+      - "전기차"
+      - "테슬라"
+      - "애플"
+      - "엔비디아"
+    politics:
+      - "정치"
+      - "대통령"
+      - "국회"
+      - "선거"
+      - "외교"
+      - "북한"
+      - "미국"
+      - "중국"
+      - "일본"
+    tech:
+      - "AI"
+      - "인공지능"
+      - "챗GPT"
+      - "클라우드"
+      - "5G"
+      - "메타버스"
+      - "NFT"
+      - "블록체인"
+    entertainment:
+      - "BTS"
+      - "아이돌"
+      - "K팝"
+      - "드라마"
+      - "영화"
+      - "축구"
+      - "야구"
+      - "손흥민"
+    lifestyle:
+      - "날씨"
+      - "여행"
+      - "맛집"
+      - "건강"
+      - "의료"
+      - "교육"
+      - "대학"
+      - "취업"
+    business:
+      - "현대차"
+      - "LG"
+      - "SK"
+      - "네이버"
+      - "카카오"
+      - "쿠팡"
+      - "배달"
+      - "물류"
+
+  # 점수 기준
+  scoring:
+    base_score: 100
+    length_thresholds:
+      good: 400
+      fair: 300
+      poor: 200
+    length_penalties:
+      fair: 10
+      poor: 20
+      bad: 30
+    issue_penalty: 5
+    slow_generation_ms: 10000
+    slow_generation_penalty: 10
+    moderate_generation_ms: 5000
+    moderate_generation_penalty: 5
+    invalid_image_penalty: 3
+
+# ===== 웹 서버 설정 =====
+server:
+  host: "127.0.0.1"
+  port: 8080

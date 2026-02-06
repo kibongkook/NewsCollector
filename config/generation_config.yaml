@@ -145,6 +145,24 @@ formats:
         description: "마무리"
         max_length: 100
 
+# 뉴스 유형별 포맷 매핑 (어떤 유형에 어떤 포맷이 적합한지)
+type_format_mapping:
+  standard:
+    preferred_formats: ["straight", "analysis", "feature", "newsletter"]
+    default_format: "straight"
+    image_usage: "supplementary"  # 보조적으로만 사용
+    max_images: 1
+  visual:
+    preferred_formats: ["straight", "card_news", "social_post"]
+    default_format: "straight"
+    image_usage: "primary"  # 이미지가 핵심
+    max_images: 10
+  data:
+    preferred_formats: ["straight", "analysis", "newsletter"]
+    default_format: "straight"
+    image_usage: "chart"  # 차트/그래프 위주
+    max_images: 3
+
 # 문장 역할 분류 패턴
 sentence_patterns:
   lead:

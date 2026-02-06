@@ -10,32 +10,36 @@ type_detection:
   visual:
     priority: 1  # 먼저 검사
     conditions:
-      image_count_min: 2  # 2장 이상 이미지
-      keywords:  # 제목/본문에 포함 시
+      image_count_min: 3  # 3장 이상 이미지면 바로 visual
+      # 고확신 키워드: 1개만 매칭해도 visual (명백한 비주얼 콘텐츠)
+      high_confidence_keywords:
         - "포토"
         - "화보"
-        - "현장"
-        - "모습"
-        - "사진"
-        - "갤러리"
-        - "인터뷰"
-        - "후기"
         - "직캠"
         - "스냅"
-        - "공개"
+        - "갤러리"
         - "모토쇼"
         - "패션쇼"
         - "콘서트"
         - "팬미팅"
         - "레드카펫"
+      high_confidence_threshold: 1  # 1개 이상 매칭 시
+      # 저확신 키워드: 일반적 단어이므로 3개 이상 매칭 필요
+      low_confidence_keywords:
+        - "현장"
+        - "모습"
+        - "사진"
+        - "공개"
+        - "인터뷰"
+        - "후기"
         - "포착"
-      keyword_match_threshold: 1  # 1개 이상 매칭 시
+      low_confidence_threshold: 3  # 3개 이상 매칭 시
 
   # 데이터형 감지 (숫자/통계 중심)
   data:
     priority: 2
     conditions:
-      numeric_density_min: 0.03  # 텍스트 대비 숫자 비율 3% 이상
+      numeric_density_min: 0.05  # 텍스트 대비 숫자 비율 5% 이상
       number_patterns:  # 정규식 패턴
         - '\d+%'        # 퍼센트
         - '\d+억'       # 금액 (억)
@@ -44,7 +48,7 @@ type_detection:
         - '전년 대비'
         - '동기 대비'
         - '증가|감소|상승|하락'
-      pattern_match_threshold: 2  # 2개 이상 매칭 시
+      pattern_match_threshold: 3  # 3개 이상 매칭 시
       keywords:
         - "통계"
         - "지표"
@@ -56,6 +60,7 @@ type_detection:
         - "랭킹"
         - "점유율"
         - "증감"
+      keyword_threshold: 3  # 키워드만으로는 3개 이상 매칭 필요
 
   # 일반형 (기본값)
   standard:

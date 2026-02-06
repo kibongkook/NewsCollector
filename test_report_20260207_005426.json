@@ -1,0 +1,115 @@
+{
+  "summary": {
+    "total_tests": 3,
+    "successful_tests": 3,
+    "failed_tests": 0,
+    "avg_score": 100.0,
+    "avg_char_count": 701.0,
+    "avg_generation_time_ms": 407.0,
+    "issue_counts": {},
+    "type_distribution": {
+      "visual": 3
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "대학",
+      "timestamp": "2026-02-07T00:53:46.384968",
+      "search_count": 5,
+      "search_time_ms": 1075,
+      "generation_success": true,
+      "generation_time_ms": 481,
+      "generated_char_count": 678,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 15,
+        "summary_length": 121,
+        "body_length": 678,
+        "total_length": 693,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "주식",
+      "timestamp": "2026-02-07T00:54:01.008824",
+      "search_count": 5,
+      "search_time_ms": 940,
+      "generation_success": true,
+      "generation_time_ms": 393,
+      "generated_char_count": 793,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 46,
+        "summary_length": 90,
+        "body_length": 793,
+        "total_length": 839,
+        "issues": []
+      },
+      "images": {
+        "total_count": 6,
+        "valid_count": 6,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "SK",
+      "timestamp": "2026-02-07T00:54:14.961105",
+      "search_count": 5,
+      "search_time_ms": 1556,
+      "generation_success": true,
+      "generation_time_ms": 347,
+      "generated_char_count": 632,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 42,
+        "summary_length": 109,
+        "body_length": 632,
+        "total_length": 674,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}
