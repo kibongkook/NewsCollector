@@ -295,6 +295,20 @@ class TemplateEngine:
                 for field in missing:
                     data[field] = ""
 
+        # 제목 길이 제한 (60자)
+        if "title" in data and len(data["title"]) > 60:
+            title = data["title"]
+            # 자연스러운 끊김 위치 찾기 (공백, 쉼표, 마침표 등)
+            truncated = title[:57]
+            last_space = truncated.rfind(' ')
+            last_comma = truncated.rfind(',')
+            last_dot = truncated.rfind('.')
+            cut_pos = max(last_space, last_comma, last_dot)
+            if cut_pos > 40:  # 최소 40자는 유지
+                data["title"] = title[:cut_pos] + "..."
+            else:
+                data["title"] = title[:57] + "..."
+
         # 변수 치환
         result = template
         for key, value in data.items():
