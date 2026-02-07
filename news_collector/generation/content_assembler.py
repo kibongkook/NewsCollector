@@ -565,6 +565,20 @@ class ContentAssembler:
         # 2. 중복 제거
         unique_sentences = self._deduplicate(all_sentences)
 
+        # 2.5. Primary source 식별 (제목-본문 일치용)
+        primary_source_id = self._get_primary_source(unique_sentences)
+
+        # 2.6. Primary source 문장 부스트 (본문 일관성 강화)
+        # 비-primary 소스에서 키워드가 없는 문장은 중요도를 낮춤
+        if primary_source_id and search_keywords:
+            for sent in unique_sentences:
+                if sent.source_news_id == primary_source_id:
+                    # Primary source 문장은 부스트
+                    sent.importance = min(sent.importance * 1.3, 1.0)
+                elif not sent.matched_keywords:
+                    # 비-primary, 키워드 없음 → 중요도 대폭 감소
+                    sent.importance *= 0.3
+
         # 3. 중요도순 정렬
         sorted_sentences = sorted(
             unique_sentences, key=lambda s: s.importance, reverse=True
@@ -572,9 +586,6 @@ class ContentAssembler:
 
         # 4. 포맷별 섹션 구성 (뉴스 유형 반영)
         sections = self._build_sections(sorted_sentences, format, detected_type)
-
-        # 4.5. Primary source 식별 (제목-본문 일치용)
-        primary_source_id = self._get_primary_source(sorted_sentences)
 
         # 5. 출처 정리
         sources = list(set(
@@ -888,17 +899,23 @@ class ContentAssembler:
         return all_sentences
 
     def _split_sentences(self, text: str) -> List[str]:
-        """문장 분리"""
-        # 마침표, 물음표, 느낌표로 분리
-        sentences = re.split(r'(?<=[.!?])\s+', text)
+        """문장 분리 (줄바꿈 + 구두점 기반)"""
+        # 1단계: 줄바꿈으로 먼저 분리 (방송 뉴스 마커/자막 분리)
+        lines = text.split('\n')
         result = []
-        for sent in sentences:
-            sent = sent.strip()
-            if sent:
-                # 끝에 구두점이 없으면 추가
-                if not sent.endswith(('.', '!', '?')):
-                    sent += '.'
-                result.append(sent)
+        for line in lines:
+            line = line.strip()
+            if not line:
+                continue
+            # 2단계: 구두점으로 추가 분리
+            parts = re.split(r'(?<=[.!?])\s+', line)
+            for sent in parts:
+                sent = sent.strip()
+                if sent:
+                    # 끝에 구두점이 없으면 추가
+                    if not sent.endswith(('.', '!', '?')):
+                        sent += '.'
+                    result.append(sent)
         return result
 
     def _calculate_importance(

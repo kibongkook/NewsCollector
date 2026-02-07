@@ -260,7 +260,7 @@ class FallbackGenerator:
 
         else:
             # 기본: 스트레이트 뉴스
-            text = self._render_straight(assembled, source_news, sources_str, search_keywords)
+            text = self._render_straight(assembled, best_source, sources_str, search_keywords)
 
         return FallbackGeneratorResult(
             text=text,
@@ -272,25 +272,24 @@ class FallbackGenerator:
     def _render_straight(
         self,
         assembled: 'AssembledContent',
-        source_news: List['NewsWithScores'],
+        primary_news: 'NewsWithScores',
         sources: str,
         search_keywords: Optional[List[str]] = None,
     ) -> str:
-        """스트레이트 뉴스 렌더링 (최고 품질 원본 제목 + ContentAssembler 본문)"""
+        """스트레이트 뉴스 렌더링 (primary source 원본 제목 + ContentAssembler 본문)"""
         sections = assembled.sections
 
-        # 제목: 최고 품질 소스 기사의 원본 제목 사용 (합성 제목 대신)
-        best_source = self._select_best_source(source_news, search_keywords)
-        title = _clean_title(best_source.title)
+        # 제목: primary source (본문과 동일한 기사)의 원본 제목 사용
+        title = _clean_title(primary_news.title)
 
         # 제목이 비어있거나 너무 짧으면 IntelligentNewsGenerator로 폴백
         if not title or len(title) < 5:
             try:
-                facts = self.intelligent_generator.extract_facts(source_news, search_keywords)
+                facts = self.intelligent_generator.extract_facts([primary_news], search_keywords)
                 title = self.intelligent_generator.generate_title(facts)
             except Exception as e:
                 logger.warning(f"제목 생성 폴백 실패: {e}")
-                title = _clean_title(source_news[0].title)
+                title = _clean_title(primary_news.title)
 
         # 본문: ContentAssembler의 풍부한 내용 사용
         return self.template_engine.render_straight(
