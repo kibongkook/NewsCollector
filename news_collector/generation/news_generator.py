@@ -29,6 +29,7 @@ from news_collector.generation.template_engine import TemplateEngine
 from news_collector.generation.prompt_builder import PromptBuilder, GenerationPrompt
 from news_collector.generation.citation_manager import CitationManager
 from news_collector.generation.content_assembler import ContentAssembler, GenerationConfig
+from news_collector.generation.intelligent_generator import IntelligentNewsGenerator
 from news_collector.utils.logger import get_logger
 
 logger = get_logger(__name__)
@@ -96,6 +97,7 @@ class FallbackGenerator:
     def __init__(self):
         self.template_engine = TemplateEngine()
         self.content_assembler = ContentAssembler()
+        self.intelligent_generator = IntelligentNewsGenerator()
         self.config = GenerationConfig()
 
     def generate(
@@ -157,7 +159,7 @@ class FallbackGenerator:
 
         else:
             # 기본: 스트레이트 뉴스
-            text = self._render_straight(assembled, source_news[0], sources_str)
+            text = self._render_straight(assembled, source_news, sources_str)
 
         return FallbackGeneratorResult(
             text=text,
@@ -169,14 +171,51 @@ class FallbackGenerator:
     def _render_straight(
         self,
         assembled: 'AssembledContent',
-        primary_news: NewsWithScores,
+        source_news: List['NewsWithScores'],
         sources: str,
     ) -> str:
-        """스트레이트 뉴스 렌더링"""
+        """스트레이트 뉴스 렌더링 (ContentAssembler 풍부한 내용 + IntelligentNewsGenerator 제목)"""
         sections = assembled.sections
 
+        # 제목 생성: IntelligentNewsGenerator 사용 (표절 방지)
+        try:
+            # ContentAssembler의 풍부한 lead와 body를 사용하여 제목 생성
+            combined_text = (sections.get("lead", "") + " " + sections.get("body", ""))[:500]
+
+            # 임시 NewsWithScores 생성 (풍부한 내용 포함)
+            from news_collector.models.news import NewsWithScores
+            enriched_news = NewsWithScores(
+                id="temp",
+                title=source_news[0].title,
+                body=combined_text,  # ContentAssembler가 스크래핑한 풍부한 내용
+                source_name=source_news[0].source_name,
+                url=source_news[0].url if source_news[0].url else ""
+            )
+
+            # IntelligentNewsGenerator로 제목 생성
+            result = self.intelligent_generator.generate_news(
+                news_list=[enriched_news],
+                sources=assembled.sources if assembled.sources else [news.source_name for news in source_news]
+            )
+
+            title = result['title']
+
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 제목 생성 실패, 폴백 사용: {e}")
+            # 폴백: primary source의 제목 사용
+            primary_news = None
+            if assembled.primary_source_id:
+                for news in source_news:
+                    if news.id == assembled.primary_source_id:
+                        primary_news = news
+                        break
+            if not primary_news:
+                primary_news = source_news[0]
+            title = primary_news.title
+
+        # 본문: ContentAssembler의 풍부한 내용 사용
         return self.template_engine.render_straight(
-            title=primary_news.title,
+            title=title,
             lead=sections.get("lead", ""),
             body=sections.get("body", ""),
             closing=sections.get("closing", ""),
@@ -188,34 +227,72 @@ class FallbackGenerator:
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
     ) -> str:
-        """속보/간략 뉴스 렌더링"""
-        headline = assembled.sections.get("headline", "")
-        if not headline and primary_news.body:
-            headline = primary_news.body[:100]
+        """속보/간략 뉴스 렌더링 (IntelligentNewsGenerator 사용)"""
+        try:
+            # 간략 뉴스는 제목과 첫 문장만 필요
+            result = self.intelligent_generator.generate_news(
+                news_list=[primary_news],
+                sources=[primary_news.source_name]
+            )
+            title = result['title']
+            # 본문의 첫 문장만 추출
+            body_lines = result['body'].split('\n')
+            headline = body_lines[0] if body_lines else ""
 
-        return self.template_engine.render_brief(
-            title=primary_news.title,
-            content=headline,
-        )
+            return self.template_engine.render_brief(
+                title=title,
+                content=headline,
+            )
+
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 실패 (brief), 폴백 사용: {e}")
+            headline = assembled.sections.get("headline", "")
+            if not headline and primary_news.body:
+                headline = primary_news.body[:100]
+
+            return self.template_engine.render_brief(
+                title=primary_news.title,
+                content=headline,
+            )
 
     def _render_social_post(
         self,
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
     ) -> str:
-        """SNS 포스트 렌더링"""
-        sections = assembled.sections
+        """SNS 포스트 렌더링 (IntelligentNewsGenerator 사용)"""
+        try:
+            result = self.intelligent_generator.generate_news(
+                news_list=[primary_news],
+                sources=[primary_news.source_name]
+            )
+            # SNS용 짧은 훅 생성
+            hook = result['title'][:50]
+            # 본문의 첫 2줄을 core로 사용
+            body_lines = result['body'].split('\n')
+            core = '\n'.join(body_lines[:2]) if len(body_lines) >= 2 else result['body'][:100]
+            hashtags = self._extract_hashtags(primary_news)
 
-        hook = sections.get("hook", primary_news.title[:50])
-        core = sections.get("core", "")
-        hashtags = sections.get("hashtags", self._extract_hashtags(primary_news))
+            return self.template_engine.render_social_post(
+                hook=hook,
+                main_content=core,
+                hashtags=hashtags,
+                cta="자세히 보기 ▶",
+            )
 
-        return self.template_engine.render_social_post(
-            hook=hook,
-            main_content=core,
-            hashtags=hashtags,
-            cta="자세히 보기 ▶",
-        )
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 실패 (social), 폴백 사용: {e}")
+            sections = assembled.sections
+            hook = sections.get("hook", primary_news.title[:50])
+            core = sections.get("core", "")
+            hashtags = sections.get("hashtags", self._extract_hashtags(primary_news))
+
+            return self.template_engine.render_social_post(
+                hook=hook,
+                main_content=core,
+                hashtags=hashtags,
+                cta="자세히 보기 ▶",
+            )
 
     def _render_card_news(
         self,
@@ -223,28 +300,57 @@ class FallbackGenerator:
         primary_news: NewsWithScores,
         sources: str,
     ) -> str:
-        """카드뉴스 렌더링"""
-        sections = assembled.sections
+        """카드뉴스 렌더링 (IntelligentNewsGenerator 사용)"""
+        try:
+            result = self.intelligent_generator.generate_news(
+                news_list=[primary_news],
+                sources=[primary_news.source_name]
+            )
+            title = result['title']
 
-        # 섹션에서 카드 데이터 추출
-        cards = []
-        for key, value in sorted(sections.items()):
-            if key.startswith("card_"):
-                card_num = key.replace("card_", "")
-                cards.append({
-                    "title": f"Point {card_num}" if card_num != "1" else primary_news.title[:30],
-                    "body": value,
-                })
+            sections = assembled.sections
 
-        if not cards:
-            # 폴백: 기존 방식
-            cards = self._create_cards(primary_news)
+            # 섹션에서 카드 데이터 추출
+            cards = []
+            for key, value in sorted(sections.items()):
+                if key.startswith("card_"):
+                    card_num = key.replace("card_", "")
+                    cards.append({
+                        "title": f"Point {card_num}" if card_num != "1" else title[:30],
+                        "body": value,
+                    })
 
-        return self.template_engine.render_card_news(
-            title=primary_news.title,
-            cards=cards,
-            sources=sources,
-        )
+            if not cards:
+                # 폴백: 기존 방식
+                cards = self._create_cards(primary_news)
+
+            return self.template_engine.render_card_news(
+                title=title,
+                cards=cards,
+                sources=sources,
+            )
+
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 실패 (card), 폴백 사용: {e}")
+            sections = assembled.sections
+
+            cards = []
+            for key, value in sorted(sections.items()):
+                if key.startswith("card_"):
+                    card_num = key.replace("card_", "")
+                    cards.append({
+                        "title": f"Point {card_num}" if card_num != "1" else primary_news.title[:30],
+                        "body": value,
+                    })
+
+            if not cards:
+                cards = self._create_cards(primary_news)
+
+            return self.template_engine.render_card_news(
+                title=primary_news.title,
+                cards=cards,
+                sources=sources,
+            )
 
     def _render_analysis(
         self,
@@ -252,18 +358,39 @@ class FallbackGenerator:
         primary_news: NewsWithScores,
         sources: str,
     ) -> str:
-        """분석 기사 렌더링"""
-        sections = assembled.sections
+        """분석 기사 렌더링 (IntelligentNewsGenerator 사용)"""
+        try:
+            result = self.intelligent_generator.generate_news(
+                news_list=[primary_news],
+                sources=[primary_news.source_name]
+            )
+            title = result['title']
 
-        return self.template_engine.render(NewsFormat.ANALYSIS, {
-            "title": primary_news.title,
-            "subtitle": f"[심층 분석] {primary_news.title[:30]}...",
-            "current_situation": sections.get("current_situation", ""),
-            "background": sections.get("background", ""),
-            "outlook": sections.get("outlook", ""),
-            "implications": sections.get("implications", ""),
-            "sources": sources,
-        })
+            sections = assembled.sections
+
+            return self.template_engine.render(NewsFormat.ANALYSIS, {
+                "title": title,
+                "subtitle": f"[심층 분석] {title[:30]}...",
+                "current_situation": sections.get("current_situation", ""),
+                "background": sections.get("background", ""),
+                "outlook": sections.get("outlook", ""),
+                "implications": sections.get("implications", ""),
+                "sources": sources,
+            })
+
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 실패 (analysis), 폴백 사용: {e}")
+            sections = assembled.sections
+
+            return self.template_engine.render(NewsFormat.ANALYSIS, {
+                "title": primary_news.title,
+                "subtitle": f"[심층 분석] {primary_news.title[:30]}...",
+                "current_situation": sections.get("current_situation", ""),
+                "background": sections.get("background", ""),
+                "outlook": sections.get("outlook", ""),
+                "implications": sections.get("implications", ""),
+                "sources": sources,
+            })
 
     def _render_feature(
         self,
@@ -271,17 +398,37 @@ class FallbackGenerator:
         primary_news: NewsWithScores,
         sources: str,
     ) -> str:
-        """기획 기사 렌더링"""
-        sections = assembled.sections
+        """기획 기사 렌더링 (IntelligentNewsGenerator 사용)"""
+        try:
+            result = self.intelligent_generator.generate_news(
+                news_list=[primary_news],
+                sources=[primary_news.source_name]
+            )
+            title = result['title']
 
-        return self.template_engine.render(NewsFormat.FEATURE, {
-            "title": primary_news.title,
-            "subtitle": "",
-            "intro": sections.get("intro", ""),
-            "sections": sections.get("main_body", ""),
-            "conclusion": sections.get("conclusion", ""),
-            "sources": sources,
-        })
+            sections = assembled.sections
+
+            return self.template_engine.render(NewsFormat.FEATURE, {
+                "title": title,
+                "subtitle": "",
+                "intro": sections.get("intro", ""),
+                "sections": sections.get("main_body", ""),
+                "conclusion": sections.get("conclusion", ""),
+                "sources": sources,
+            })
+
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 실패 (feature), 폴백 사용: {e}")
+            sections = assembled.sections
+
+            return self.template_engine.render(NewsFormat.FEATURE, {
+                "title": primary_news.title,
+                "subtitle": "",
+                "intro": sections.get("intro", ""),
+                "sections": sections.get("main_body", ""),
+                "conclusion": sections.get("conclusion", ""),
+                "sources": sources,
+            })
 
     def _render_newsletter(
         self,
@@ -304,20 +451,43 @@ class FallbackGenerator:
         return " ".join(f"#{w}" for w in words[:3])
 
     def _create_cards(self, news: NewsWithScores, max_cards: int = 5) -> List[Dict[str, str]]:
-        """카드뉴스용 카드 생성 (폴백용)"""
-        body = news.body or ""
-        sentences = re.split(r'[.!?]\s*', body)
-        sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 20]
+        """카드뉴스용 카드 생성 (폴백용, IntelligentNewsGenerator 사용)"""
+        try:
+            result = self.intelligent_generator.generate_news(
+                news_list=[news],
+                sources=[news.source_name]
+            )
+            title = result['title']
+            body = result['body'] or ""
 
-        cards = [{"title": news.title[:30], "body": news.title}]
+            sentences = re.split(r'[.!?]\s*', body)
+            sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 20]
 
-        for i, sent in enumerate(sentences[:max_cards - 1]):
-            cards.append({
-                "title": f"Point {i + 1}",
-                "body": sent[:150],  # 카드당 150자로 확장
-            })
+            cards = [{"title": title[:30], "body": title}]
 
-        return cards
+            for i, sent in enumerate(sentences[:max_cards - 1]):
+                cards.append({
+                    "title": f"Point {i + 1}",
+                    "body": sent[:150],  # 카드당 150자로 확장
+                })
+
+            return cards
+
+        except Exception as e:
+            logger.warning(f"IntelligentNewsGenerator 실패 (_create_cards), 폴백 사용: {e}")
+            body = news.body or ""
+            sentences = re.split(r'[.!?]\s*', body)
+            sentences = [s.strip() for s in sentences if s.strip() and len(s.strip()) > 20]
+
+            cards = [{"title": news.title[:30], "body": news.title}]
+
+            for i, sent in enumerate(sentences[:max_cards - 1]):
+                cards.append({
+                    "title": f"Point {i + 1}",
+                    "body": sent[:150],
+                })
+
+            return cards
 
 
 # AssembledContent 타입 힌트용 임포트
@@ -481,7 +651,9 @@ class NewsGenerator:
             )
 
         except Exception as e:
+            import traceback
             logger.error("뉴스 생성 실패: %s", e)
+            logger.error("Stack trace:\n%s", traceback.format_exc())  # Phase 2 디버깅: 상세 에러 출력
             return GenerationResponse(
                 success=False,
                 error_message=str(e),

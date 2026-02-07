@@ -15,6 +15,8 @@ import re
 from dataclasses import dataclass, field
 from typing import List, Dict, Optional, Any, Set
 import yaml
+import requests
+from io import BytesIO
 
 from news_collector.models.news import NewsWithScores
 from news_collector.models.generated_news import NewsFormat
@@ -66,6 +68,7 @@ class AssembledContent:
     sources: List[str]  # 출처 목록
     images: List[str] = field(default_factory=list)  # 이미지 URL 목록
     news_type: str = "standard"  # 뉴스 유형 (standard/visual/data)
+    primary_source_id: Optional[str] = None  # Primary source 기사 ID (제목-본문 일치용)
 
     def to_dict(self) -> Dict[str, Any]:
         """템플릿 렌더링용 딕셔너리 변환"""
@@ -400,6 +403,37 @@ class ContentAssembler:
     - 뉴스 유형 자동 감지 (일반형/비주얼형/데이터형)
     """
 
+    # 안전장치: 극단적 케이스 방지 (무한 루프/메모리)
+    MAX_TOTAL_SENTENCES = 30
+
+    # 주요 기업/기관 공식 뉴스룸 (워터마크 없는 원본 이미지 확보용)
+    OFFICIAL_NEWSROOMS = {
+        # 대기업
+        "삼성전자": "https://news.samsung.com/kr",
+        "삼성": "https://news.samsung.com/kr",
+        "현대자동차": "https://www.hyundai.com/kr/newsroom",
+        "현대차": "https://www.hyundai.com/kr/newsroom",
+        "기아": "https://www.kia.com/kr/newsroom",
+        "LG전자": "https://www.lge.co.kr/kr/newsroom",
+        "LG": "https://www.lge.co.kr/kr/newsroom",
+        "SK하이닉스": "https://news.skhynix.com",
+        "SK": "https://www.sk.com/press",
+        "네이버": "https://www.navercorp.com/naver/newsroom",
+        "카카오": "https://www.kakaocorp.com/page/newsroom",
+        "포스코": "https://newsroom.posco.com",
+        # 정부/공공기관
+        "청와대": "https://www.president.go.kr/newsroom",
+        "국회": "https://www.assembly.go.kr/portal/bbs/B0000011/list.do",
+        "정부": "https://www.korea.kr/news/pressReleaseList.do",
+        "산업통상자원부": "https://www.motie.go.kr/motie/ne/presse/press2/bbs/bbsList.do",
+        "국토교통부": "https://www.molit.go.kr/USR/NEWS/m_71/lst.jsp",
+        "문화체육관광부": "https://www.mcst.go.kr/kor/s_notice/press/pressView.jsp",
+        "고용노동부": "https://www.moel.go.kr/news/enews/report/enewsView.do",
+        # 금융
+        "한국은행": "https://www.bok.or.kr/portal/bbs/B0000245/list.do",
+        "금융위원회": "https://www.fsc.go.kr/no010101",
+    }
+
     def __init__(
         self,
         config: Optional[GenerationConfig] = None,
@@ -536,24 +570,76 @@ class ContentAssembler:
         # 4. 포맷별 섹션 구성 (뉴스 유형 반영)
         sections = self._build_sections(sorted_sentences, format, detected_type)
 
+        # 4.5. Primary source 식별 (제목-본문 일치용)
+        primary_source_id = self._get_primary_source(sorted_sentences)
+
         # 5. 출처 정리
         sources = list(set(
             news.source_name for news in source_news if news.source_name
         ))
 
-        # 6. 이미지 수집 (enriched news에서) + 필터링
+        # 6. 이미지 수집 (enriched news에서) + 필터링 + 워터마크 처리
         all_images: List[str] = []
-        for news in source_news:
-            for img in (news.image_urls or []):
-                if img and img not in all_images and self._is_valid_news_image(img):
-                    all_images.append(img)
+        seen_normalized_urls: Set[str] = set()  # 정규화된 URL로 중복 체크
 
-        # 이미지 최대 개수 (설정 기반)
-        type_spec = self.format_spec.get_news_type_spec(detected_type)
-        max_images = 5  # 기본값
-        if detected_type == NewsType.VISUAL:
-            gallery_spec = type_spec.get("sections", {}).get("gallery", {})
-            max_images = gallery_spec.get("count", {}).get("max", 10)
+        for news in source_news:
+            article_text = news.body or news.summary or ""
+            article_keywords = search_keywords or []
+            news_url = news.url or ""
+
+            for img in (news.image_urls or []):
+                if not img:
+                    continue
+
+                # Phase 2 디버깅: ImageInfo 타입 체크
+                if not isinstance(img, str):
+                    # ImageInfo 객체가 온 경우 URL만 추출
+                    logger.warning(f"ImageInfo 객체 감지 (타입: {type(img).__name__}), URL 추출")
+                    from news_collector.ingestion.content_scraper import ImageInfo
+                    if isinstance(img, ImageInfo):
+                        img = img.url
+                    else:
+                        logger.error(f"알 수 없는 이미지 타입: {type(img)}")
+                        continue
+
+                # URL 정규화 (쿼리 파라미터 제거)
+                normalized_url = self._normalize_image_url(img)
+
+                # 정규화된 URL로 중복 체크
+                if normalized_url in seen_normalized_urls:
+                    continue
+
+                # 기본 유효성 체크
+                if not self._is_valid_news_image(img):
+                    continue
+
+                # 워터마크 처리 (원본 찾기 또는 스크린샷)
+                clean_img = self._get_clean_image(
+                    article_text,
+                    article_keywords,
+                    img,
+                    news_url
+                )
+
+                if clean_img:
+                    # 정제된 이미지도 정규화하여 중복 체크
+                    clean_normalized = self._normalize_image_url(clean_img)
+                    if clean_normalized not in seen_normalized_urls:
+                        all_images.append(clean_img)
+                        seen_normalized_urls.add(clean_normalized)
+
+        # Phase 1: 타입별 이미지 개수 제한 (순서 기반 우선순위)
+        # - 이미지는 이미 등장 순서대로 정렬되어 있음 (먼저 나온 이미지 = 더 관련성 높음)
+        # - 상위 N개만 선택
+        if detected_type == NewsType.STANDARD:
+            max_images = 5  # Standard: 3-5장 권장, 최대 5장
+        elif detected_type == NewsType.VISUAL:
+            max_images = 8  # Visual: 5-8장 권장, 최대 8장
+        elif detected_type == NewsType.DATA:
+            max_images = 3  # Data: 1-3장 권장, 최대 3장
+        else:
+            max_images = 5  # 기본값
+
         images = all_images[:max_images]
 
         total_text = "\n".join(sections.values())
@@ -566,6 +652,7 @@ class ContentAssembler:
             sources=sources,
             images=images,
             news_type=detected_type,
+            primary_source_id=primary_source_id,
         )
 
     def _enrich_news_content(
@@ -593,9 +680,10 @@ class ContentAssembler:
                         if scraped.success and len(scraped.full_body) > body_len:
                             # 본문 + 이미지 업데이트
                             new_images = list(news.image_urls or [])
-                            for img in scraped.images:
-                                if img not in new_images:
-                                    new_images.append(img)
+                            # Phase 2: scraped.images는 List[ImageInfo]이므로 .url로 접근
+                            for img_info in scraped.images:
+                                if img_info.url not in new_images:
+                                    new_images.append(img_info.url)
                             news = replace(
                                 news,
                                 body=scraped.full_body,
@@ -982,6 +1070,68 @@ class ContentAssembler:
             return max(source_scores, key=lambda x: source_scores[x])
         return None
 
+    def _create_paragraphs(self, sentences: List[ClassifiedSentence]) -> str:
+        """지능형 문단 구분: 역할과 의미적 연결성 기반 자동 그룹핑
+
+        문장을 역할(role)과 의미적 유사도를 기반으로 자동으로 문단으로 그룹핑합니다.
+        - 역할이 변경되면 새 문단 시작
+        - 문단 길이가 너무 길거나 짧으면 조정
+        - 최소 문단 길이: 50자, 최대 문단 길이: 400자
+        """
+        if not sentences:
+            return ""
+
+        paragraphs = []
+        current_paragraph = []
+        current_role = None
+        current_length = 0
+
+        MIN_PARAGRAPH_LENGTH = 50  # 최소 문단 길이
+        MAX_PARAGRAPH_LENGTH = 400  # 최대 문단 길이
+        TARGET_PARAGRAPH_LENGTH = 200  # 목표 문단 길이
+
+        for sentence in sentences:
+            sentence_length = len(sentence.text)
+
+            # 역할 변경 감지
+            role_changed = current_role is not None and sentence.role != current_role
+
+            # 문단을 나눌 조건:
+            # 1. 역할이 변경되고 현재 문단이 최소 길이 이상
+            # 2. 현재 문단이 최대 길이 초과
+            should_break = False
+
+            if role_changed and current_length >= MIN_PARAGRAPH_LENGTH:
+                should_break = True
+            elif current_length + sentence_length > MAX_PARAGRAPH_LENGTH and current_length >= MIN_PARAGRAPH_LENGTH:
+                should_break = True
+
+            if should_break and current_paragraph:
+                # 현재 문단 완성
+                paragraphs.append(" ".join(s.text for s in current_paragraph))
+                current_paragraph = []
+                current_length = 0
+
+            # 문장 추가
+            current_paragraph.append(sentence)
+            current_length += sentence_length
+            current_role = sentence.role
+
+        # 마지막 문단 추가
+        if current_paragraph:
+            paragraphs.append(" ".join(s.text for s in current_paragraph))
+
+        # 너무 짧은 문단은 이전 문단과 병합
+        merged_paragraphs = []
+        for i, para in enumerate(paragraphs):
+            if len(para) < MIN_PARAGRAPH_LENGTH and merged_paragraphs:
+                # 이전 문단과 병합
+                merged_paragraphs[-1] += " " + para
+            else:
+                merged_paragraphs.append(para)
+
+        return "\n\n".join(merged_paragraphs)
+
     def _source_preferred_select(
         self,
         candidates: List[ClassifiedSentence],
@@ -1049,23 +1199,13 @@ class ContentAssembler:
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
     ) -> Dict[str, str]:
-        """스트레이트 뉴스 구성 (400-800자, 소스 기사 일관성 보장)"""
-        min_length = spec.get("min_length", 400)
-        max_length = spec.get("max_length", 800)
+        """스트레이트 뉴스 구성 (제한 없음, 원본 기사의 자연스러운 구조 존중)"""
         sections_spec = spec.get("sections", {})
 
-        # 섹션별 설정 조회
+        # 섹션별 설정 조회 (우선 역할만 사용)
         lead_spec = sections_spec.get("lead", {})
         body_spec = sections_spec.get("body", {})
         closing_spec = sections_spec.get("closing", {})
-
-        # 섹션별 문장 수 제한
-        lead_min = lead_spec.get("min_sentences", 1)
-        lead_max = lead_spec.get("max_sentences", 2)
-        body_min = body_spec.get("min_sentences", 3)
-        body_max = body_spec.get("max_sentences", 6)
-        closing_min = closing_spec.get("min_sentences", 1)
-        closing_max = closing_spec.get("max_sentences", 2)
 
         # 섹션별 우선 역할
         lead_roles = tuple(lead_spec.get("priority_roles", ["lead", "fact"]))
@@ -1074,77 +1214,43 @@ class ContentAssembler:
 
         used_texts: Set[str] = set()
 
-        # ★ 소스 기사 관련도 기반 우선순위 (교차 기사 혼합 방지)
+        # ★ Primary source 식별 (교차 기사 혼합 방지)
         primary_source = self._get_primary_source(sentences)
 
-        # 리드: 우선 역할 + primary source 우선
-        lead_candidates = [s for s in sentences if s.role in lead_roles]
-        lead_sentences = self._source_preferred_select(lead_candidates, primary_source, lead_max)
-        if len(lead_sentences) < lead_min:
-            additional = [s for s in sentences if s.text not in {ls.text for ls in lead_sentences}]
-            lead_sentences.extend(
-                self._source_preferred_select(additional, primary_source, lead_min - len(lead_sentences))
-            )
-        lead = " ".join(s.text for s in lead_sentences) if lead_sentences else ""
-        if not lead and sentences:
-            lead = sentences[0].text
-            used_texts.add(sentences[0].text)
+        # 안전장치: 최대 문장 수 제한 (극단적 케이스만)
+        sentences = sentences[:self.MAX_TOTAL_SENTENCES]
+
+        # 리드: Primary source의 모든 lead 역할 문장
+        lead_candidates = [
+            s for s in sentences
+            if s.role in lead_roles and s.source_news_id == primary_source
+        ]
+        lead_sentences = lead_candidates if lead_candidates else sentences[:1]
+        lead = " ".join(s.text for s in lead_sentences)
         used_texts.update(s.text for s in lead_sentences)
 
-        # 본문: 우선 역할 + primary source 우선
+        # 본문: Primary source의 모든 body 역할 문장 (지능형 문단 구분)
         body_candidates = [
             s for s in sentences
-            if s.role in body_roles and s.text not in used_texts
+            if s.role in body_roles
+            and s.source_news_id == primary_source
+            and s.text not in used_texts
         ]
-        body_sentences = self._source_preferred_select(body_candidates, primary_source, body_max)
-        if len(body_sentences) < body_min:
-            additional = [
-                s for s in sentences
-                if s.text not in used_texts and s.text not in {bs.text for bs in body_sentences}
-            ]
-            body_sentences.extend(
-                self._source_preferred_select(additional, primary_source, body_min - len(body_sentences))
-            )
-        body = " ".join(s.text for s in body_sentences)
+        body_sentences = body_candidates
+
+        # 지능형 문단 구분: 역할 기반 자동 그룹핑
+        body = self._create_paragraphs(body_sentences)
         used_texts.update(s.text for s in body_sentences)
 
-        # 마무리: 우선 역할 + primary source 우선
+        # 마무리: Primary source의 모든 closing 역할 문장
         closing_candidates = [
             s for s in sentences
-            if s.role in closing_roles and s.text not in used_texts
+            if s.role in closing_roles
+            and s.source_news_id == primary_source
+            and s.text not in used_texts
         ]
-        closing_sentences = self._source_preferred_select(closing_candidates, primary_source, closing_max)
-        if len(closing_sentences) < closing_min:
-            additional = [
-                s for s in sentences
-                if s.text not in used_texts and s.text not in {cs.text for cs in closing_sentences}
-            ]
-            closing_sentences.extend(
-                self._source_preferred_select(additional, primary_source, closing_min - len(closing_sentences))
-            )
+        closing_sentences = closing_candidates
         closing = " ".join(s.text for s in closing_sentences)
-        used_texts.update(s.text for s in closing_sentences)
-
-        # 전체 최소 길이 충족 확인 - 부족하면 본문에 primary source 문장 추가
-        current_text = f"{lead} {body} {closing}".strip()
-        if len(current_text) < min_length:
-            remaining = [s for s in sentences if s.text not in used_texts]
-            remaining = self._source_preferred_select(remaining, primary_source, len(remaining))
-            for sent in remaining:
-                if len(current_text) >= min_length:
-                    break
-                body += " " + sent.text
-                current_text = f"{lead} {body} {closing}".strip()
-
-        # 최대 길이 초과 시 본문 축소 (마지막 문장부터 제거)
-        if len(current_text) > max_length:
-            body_parts = body.split(". ")
-            while len(current_text) > max_length and len(body_parts) > body_min:
-                body_parts.pop()
-                body = ". ".join(body_parts)
-                if body and not body.endswith("."):
-                    body += "."
-                current_text = f"{lead} {body} {closing}".strip()
 
         # 연결어 추가 (본문만)
         body_with_connectors = self._add_connectors(body.strip(), "body")
@@ -1378,68 +1484,49 @@ class ContentAssembler:
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
     ) -> Dict[str, str]:
-        """비주얼 뉴스 구성 (짧은 본문 + 이미지 중심, 소스 일관성 보장)
+        """비주얼 뉴스 구성 (이미지 중심, 제한 없음)
 
         news_format_spec.yaml의 visual 섹션 규격 적용:
-        - 전체 200-500자 (일반형보다 짧음)
+        - 제한 없음 (원본 기사의 자연스러운 구조)
         - 리드: 상황 설명 (누가/어디서/언제)
         - 본문: 장면/내용 묘사
-        - 마무리: 간결한 1문장
+        - 마무리: 전망/마무리
         """
-        # visual 타입 고유 길이 (news_format_spec에서 로드)
-        visual_spec = self.format_spec.get_news_type_spec(NewsType.VISUAL)
-        length = visual_spec.get("length", {})
-        min_length = length.get("min", 200)
-        max_length = length.get("max", 500)
-
         primary_source = self._get_primary_source(sentences)
         used_texts: Set[str] = set()
 
-        # 리드: 상황 설명 (1-2문장, lead/fact/background 우선)
-        lead_candidates = [s for s in sentences if s.role in ("lead", "fact", "background")]
-        lead_sentences = self._source_preferred_select(lead_candidates, primary_source, 2)
-        if not lead_sentences and sentences:
-            lead_sentences = [sentences[0]]
+        # 안전장치
+        sentences = sentences[:self.MAX_TOTAL_SENTENCES]
+
+        # 리드: Primary source의 모든 lead/fact/background 문장
+        lead_candidates = [
+            s for s in sentences
+            if s.role in ("lead", "fact", "background")
+            and s.source_news_id == primary_source
+        ]
+        lead_sentences = lead_candidates if lead_candidates else sentences[:1]
         lead = " ".join(s.text for s in lead_sentences)
         used_texts.update(s.text for s in lead_sentences)
 
-        # 본문: 장면/내용 묘사 (2-3문장)
-        body_candidates = [s for s in sentences if s.text not in used_texts]
-        body_sentences = self._source_preferred_select(body_candidates, primary_source, 3)
+        # 본문: Primary source의 나머지 문장 (closing 제외)
+        body_candidates = [
+            s for s in sentences
+            if s.text not in used_texts
+            and s.source_news_id == primary_source
+            and s.role not in ("outlook", "implication")
+        ]
+        body_sentences = body_candidates
         body = " ".join(s.text for s in body_sentences)
         used_texts.update(s.text for s in body_sentences)
 
-        # 마무리: 간결 (1문장)
+        # 마무리: Primary source의 outlook/implication 문장
         closing_candidates = [
             s for s in sentences
-            if s.role in ("outlook", "implication") and s.text not in used_texts
+            if s.role in ("outlook", "implication")
+            and s.source_news_id == primary_source
+            and s.text not in used_texts
         ]
-        closing_sentences = self._source_preferred_select(closing_candidates, primary_source, 1)
-        if not closing_sentences:
-            remaining = [s for s in sentences if s.text not in used_texts]
-            closing_sentences = remaining[:1]
-        closing = " ".join(s.text for s in closing_sentences)
-
-        # 최소 길이 확보
-        current = f"{lead} {body} {closing}".strip()
-        if len(current) < min_length:
-            remaining = [s for s in sentences if s.text not in used_texts]
-            remaining = self._source_preferred_select(remaining, primary_source, len(remaining))
-            for sent in remaining:
-                if len(current) >= min_length:
-                    break
-                body += " " + sent.text
-                current = f"{lead} {body} {closing}".strip()
-
-        # 최대 길이 제한
-        if len(current) > max_length:
-            body_parts = body.split(". ")
-            while len(current) > max_length and len(body_parts) > 1:
-                body_parts.pop()
-                body = ". ".join(body_parts)
-                if body and not body.endswith("."):
-                    body += "."
-                current = f"{lead} {body} {closing}".strip()
+        closing = " ".join(s.text for s in closing_candidates)
 
         return {
             "lead": lead.strip(),
@@ -1452,76 +1539,59 @@ class ContentAssembler:
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
     ) -> Dict[str, str]:
-        """데이터 뉴스 구성 (수치/통계 중심, 소스 일관성 보장)
+        """데이터 뉴스 구성 (수치/통계 중심, 제한 없음)
 
         news_format_spec.yaml의 data 섹션 규격 적용:
-        - 전체 300-600자
+        - 제한 없음 (원본 기사의 자연스러운 구조)
         - 리드: 핵심 수치 포함 문장 우선
-        - 본문: 분석/배경 + 통계 포함 문장 우선
+        - 본문: 분석/배경, 숫자 포함 문장 우선
         - 마무리: 전망/시사점
         """
-        # data 타입 고유 길이 (news_format_spec에서 로드)
-        data_spec = self.format_spec.get_news_type_spec(NewsType.DATA)
-        length = data_spec.get("length", {})
-        min_length = length.get("min", 300)
-        max_length = length.get("max", 600)
-
         primary_source = self._get_primary_source(sentences)
         used_texts: Set[str] = set()
 
-        # 리드: 핵심 수치 포함 문장 우선 (1-2문장)
-        stat_leads = [s for s in sentences if s.role in ("statistic", "lead") and s.has_number]
+        # 안전장치
+        sentences = sentences[:self.MAX_TOTAL_SENTENCES]
+
+        # 리드: Primary source의 statistic/lead 문장 (숫자 포함 우선)
+        stat_leads = [
+            s for s in sentences
+            if s.role in ("statistic", "lead")
+            and s.has_number
+            and s.source_news_id == primary_source
+        ]
         if not stat_leads:
-            stat_leads = [s for s in sentences if s.role in ("lead", "fact")]
-        lead_sentences = self._source_preferred_select(stat_leads, primary_source, 2)
-        if not lead_sentences and sentences:
-            lead_sentences = [sentences[0]]
+            stat_leads = [
+                s for s in sentences
+                if s.role in ("lead", "fact")
+                and s.source_news_id == primary_source
+            ]
+        lead_sentences = stat_leads if stat_leads else sentences[:1]
         lead = " ".join(s.text for s in lead_sentences)
         used_texts.update(s.text for s in lead_sentences)
 
-        # 본문: 분석/배경 (3-5문장, 숫자 포함 문장 우선)
-        body_candidates = [s for s in sentences if s.text not in used_texts]
+        # 본문: Primary source의 나머지 문장 (숫자 포함 우선)
+        body_candidates = [
+            s for s in sentences
+            if s.text not in used_texts
+            and s.source_news_id == primary_source
+            and s.role not in ("outlook", "implication")
+        ]
+        # 숫자 포함 문장 우선 정렬
         with_numbers = [s for s in body_candidates if s.has_number]
         without_numbers = [s for s in body_candidates if not s.has_number]
-        body_pool = (
-            self._source_preferred_select(with_numbers, primary_source, 4) +
-            self._source_preferred_select(without_numbers, primary_source, 4)
-        )
-        body_sentences = body_pool[:5]
+        body_sentences = with_numbers + without_numbers
         body = " ".join(s.text for s in body_sentences)
         used_texts.update(s.text for s in body_sentences)
 
-        # 마무리: 전망/시사점 (1-2문장)
+        # 마무리: Primary source의 outlook/implication 문장
         closing_candidates = [
             s for s in sentences
-            if s.role in ("outlook", "implication") and s.text not in used_texts
+            if s.role in ("outlook", "implication")
+            and s.source_news_id == primary_source
+            and s.text not in used_texts
         ]
-        closing_sentences = self._source_preferred_select(closing_candidates, primary_source, 2)
-        if not closing_sentences:
-            remaining = [s for s in sentences if s.text not in used_texts]
-            closing_sentences = remaining[:1]
-        closing = " ".join(s.text for s in closing_sentences)
-
-        # 최소 길이 확보
-        current = f"{lead} {body} {closing}".strip()
-        if len(current) < min_length:
-            remaining = [s for s in sentences if s.text not in used_texts]
-            remaining = self._source_preferred_select(remaining, primary_source, len(remaining))
-            for sent in remaining:
-                if len(current) >= min_length:
-                    break
-                body += " " + sent.text
-                current = f"{lead} {body} {closing}".strip()
-
-        # 최대 길이 제한
-        if len(current) > max_length:
-            body_parts = body.split(". ")
-            while len(current) > max_length and len(body_parts) > 2:
-                body_parts.pop()
-                body = ". ".join(body_parts)
-                if body and not body.endswith("."):
-                    body += "."
-                current = f"{lead} {body} {closing}".strip()
+        closing = " ".join(s.text for s in closing_candidates)
 
         return {
             "lead": lead.strip(),
@@ -1538,6 +1608,36 @@ class ContentAssembler:
             source_count=0,
             sources=[],
         )
+
+    def _normalize_image_url(self, url: str) -> str:
+        """이미지 URL 정규화 (도메인 무시, 경로만 사용하여 중복 판단)
+
+        Phase 1 개선: 도메인 제거, 경로만 비교
+        - 같은 이미지가 다른 CDN에서 오면 중복으로 감지
+        - 예: https://cdn1.com/news/photo.jpg?w=800 → /news/photo.jpg
+        - 예: https://cdn2.com/news/photo.jpg → /news/photo.jpg (중복!)
+
+        Args:
+            url: 원본 URL
+
+        Returns:
+            정규화된 경로 (도메인/쿼리 제외)
+        """
+        try:
+            from urllib.parse import urlparse
+
+            parsed = urlparse(url)
+            # 경로만 사용 (도메인, 쿼리, 프래그먼트 제거)
+            path = parsed.path
+
+            # 경로가 없으면 전체 URL 사용 (fallback)
+            if not path or path == '/':
+                return url.lower()
+
+            return path.lower()  # 대소문자 통일
+        except Exception as e:
+            logger.debug(f"URL 정규화 실패: {e}")
+            return url.lower()
 
     def _is_valid_news_image(self, img_url: str) -> bool:
         """뉴스 관련 이미지인지 검증 (광고/아이콘/UI 이미지 제외)"""
@@ -1566,6 +1666,14 @@ class ContentAssembler:
             'icon', 'logo', 'btn', 'button', 'badge',
             'util_', '_util', 'view_util', 'view_btn', 'view_bt',
             'tool-', '-tool', 'bookmark', 'print', 'copy', 'font',
+            # 상단/하단 UI 이미지
+            'top.', 'bottom.', '/top.', '/bottom.',
+            # 날씨 아이콘
+            'weather/', '/weather_', 'weather_icon',
+            # 국기/플래그 이미지
+            'flag_', '_flag', '/flag/', 'country_',
+            # 추가 아이콘 패턴
+            'ic_', '/ic_', 'img_icon',
             # 배경/장식/정보 이미지
             '_bg', 'bg_', '_bg.', 'series_', 'header_', 'footer_',
             '_info', 'info_', 'notice_', 'popup_', 'modal_',
@@ -1619,3 +1727,429 @@ class ContentAssembler:
                 return False
 
         return True
+
+    # ==============================================================================
+    # 이미지 품질 개선: 워터마크 처리 및 원본 찾기
+    # ==============================================================================
+
+    def _check_image_quality(self, url: str) -> bool:
+        """이미지 품질 검증 (HEAD 요청으로 메타데이터만 확인)
+
+        체크 항목:
+        1. Content-Length: 최소 10KB (저화질 제외)
+        2. Content-Type: image/* 확인
+
+        Args:
+            url: 이미지 URL
+
+        Returns:
+            True: 품질 OK, False: 저화질/무효
+        """
+        try:
+            # HEAD 요청 (본문 다운로드 안 함)
+            response = requests.head(
+                url,
+                timeout=3,
+                allow_redirects=True,
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
+
+            # Content-Type 확인
+            content_type = response.headers.get('Content-Type', '')
+            if not content_type.startswith('image/'):
+                return False
+
+            # 파일 크기 확인 (최소 10KB)
+            content_length = response.headers.get('Content-Length')
+            if content_length:
+                size_kb = int(content_length) / 1024
+                if size_kb < 10:  # 10KB 미만은 아이콘/썸네일
+                    logger.debug(f"이미지 크기 부족: {size_kb:.1f}KB < 10KB")
+                    return False
+                if size_kb > 5000:  # 5MB 초과는 너무 큼
+                    logger.debug(f"이미지 크기 초과: {size_kb:.1f}KB > 5MB")
+                    return False
+
+            return True
+
+        except Exception as e:
+            # 네트워크 오류 시 일단 통과 (너무 엄격하면 이미지 없음)
+            logger.debug(f"이미지 품질 체크 실패: {e}")
+            return True
+
+    def _validate_image_dimensions(self, url: str) -> tuple:
+        """이미지 해상도 확인 (헤더만 다운로드)
+
+        Args:
+            url: 이미지 URL
+
+        Returns:
+            (width, height) or (None, None)
+        """
+        try:
+            from PIL import Image
+
+            response = requests.get(
+                url,
+                timeout=3,
+                stream=True,
+                headers={
+                    'User-Agent': 'Mozilla/5.0',
+                    'Range': 'bytes=0-5000'  # 첫 5KB만
+                }
+            )
+
+            # PIL로 헤더 파싱
+            img = Image.open(BytesIO(response.content))
+            width, height = img.size
+
+            logger.debug(f"이미지 해상도: {width}x{height}")
+            return width, height
+
+        except Exception as e:
+            logger.debug(f"이미지 해상도 확인 실패: {e}")
+            return None, None
+
+    def _check_image_relevance(
+        self,
+        img_url: str,
+        article_keywords: List[str]
+    ) -> bool:
+        """이미지-내용 관련성 검증
+
+        이미지 alt text/파일명과 기사 키워드 매칭
+
+        Args:
+            img_url: 이미지 URL
+            article_keywords: 기사 키워드
+
+        Returns:
+            True: 관련성 있음, False: 무관
+        """
+        if not article_keywords:
+            return True  # 키워드 없으면 통과
+
+        try:
+            # URL 파일명에서 키워드 추출
+            from urllib.parse import urlparse
+            parsed = urlparse(img_url)
+            filename = parsed.path.split('/')[-1].lower()
+
+            # 키워드 매칭
+            for keyword in article_keywords[:5]:  # 상위 5개 키워드만
+                if keyword.lower() in filename:
+                    logger.debug(f"이미지 관련성 확인: '{keyword}' in {filename}")
+                    return True
+
+            # 매칭 안 되어도 일단 통과 (너무 엄격하면 이미지 없음)
+            return True
+
+        except Exception:
+            return True
+
+    def _extract_organizations(self, text: str) -> List[str]:
+        """텍스트에서 조직명 추출
+
+        Args:
+            text: 기사 본문
+
+        Returns:
+            조직명 리스트
+        """
+        found_orgs = []
+        for org_name in self.OFFICIAL_NEWSROOMS.keys():
+            if org_name in text:
+                found_orgs.append(org_name)
+        return found_orgs
+
+    def _detect_watermark_position(self, img_url: str) -> str:
+        """워터마크 위치 감지 (URL 패턴 기반 간단 버전)
+
+        Args:
+            img_url: 이미지 URL
+
+        Returns:
+            "none": 워터마크 없음
+            "corner": 코너 워터마크 (우하단/좌하단)
+            "center": 중앙 워터마크
+        """
+        url_lower = img_url.lower()
+
+        # URL에 워터마크 표시가 있는 경우
+        if any(p in url_lower for p in ['/watermark/', '/wm/', '_wm.', '-wm.']):
+            # 중앙 워터마크 명시
+            if 'center' in url_lower or 'full' in url_lower:
+                return "center"
+            return "corner"
+
+        # 기본: 없다고 가정 (대부분 코너 워터마크는 URL에 표시 안 함)
+        return "none"
+
+    def _should_find_original(
+        self,
+        article_text: str,
+        watermark_position: str
+    ) -> bool:
+        """원본 찾기 vs 스크린샷 판단
+
+        기준:
+        1. 중앙 워터마크 → 무조건 원본 찾기
+        2. 대기업/정부 언급 → 원본 찾기 시도
+        3. 나머지 → 스크린샷 사용
+
+        Args:
+            article_text: 기사 본문
+            watermark_position: 워터마크 위치
+
+        Returns:
+            True: 원본 찾기, False: 스크린샷
+        """
+        # 중앙 워터마크는 무조건 원본 찾기
+        if watermark_position == "center":
+            return True
+
+        # 기사에서 주요 조직 추출
+        orgs = self._extract_organizations(article_text)
+
+        # 주요 조직이 언급되면 원본 찾기 시도
+        if orgs:
+            return True
+
+        return False
+
+    def _find_original_from_newsroom(
+        self,
+        org_name: str,
+        article_keywords: List[str],
+        article_date: Optional[str] = None
+    ) -> Optional[str]:
+        """공식 뉴스룸에서 원본 이미지 찾기
+
+        Args:
+            org_name: 조직명
+            article_keywords: 기사 키워드
+            article_date: 기사 날짜 (선택)
+
+        Returns:
+            원본 이미지 URL or None
+        """
+        newsroom_url = self.OFFICIAL_NEWSROOMS.get(org_name)
+        if not newsroom_url:
+            return None
+
+        try:
+            # 간단 구현: 뉴스룸 메인 페이지 크롤링
+            # (실제로는 각 사이트별 검색 API 사용 권장)
+            from bs4 import BeautifulSoup
+
+            response = requests.get(
+                newsroom_url,
+                timeout=5,
+                headers={'User-Agent': 'Mozilla/5.0'}
+            )
+
+            if response.status_code != 200:
+                return None
+
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            # 최근 이미지 찾기
+            # (각 사이트마다 구조가 다르므로 일반적인 img 태그 검색)
+            images = soup.find_all('img', src=True)
+
+            # 키워드 매칭하여 관련 이미지 찾기
+            for img in images[:10]:  # 최근 10개만 체크
+                img_url = img.get('src', '')
+                img_alt = img.get('alt', '')
+
+                # 상대 URL을 절대 URL로 변환
+                if img_url.startswith('/'):
+                    from urllib.parse import urljoin
+                    img_url = urljoin(newsroom_url, img_url)
+
+                # 키워드 매칭 (이미지 alt 텍스트와 비교)
+                if article_keywords and img_alt:
+                    if any(kw in img_alt for kw in article_keywords[:3]):
+                        # 유효한 이미지 URL인지 확인
+                        if self._is_valid_image_url(img_url):
+                            logger.info(f"원본 이미지 발견: {org_name} 뉴스룸 - {img_url}")
+                            return img_url
+
+            return None
+
+        except Exception as e:
+            logger.warning(f"뉴스룸 검색 실패 ({org_name}): {e}")
+            return None
+
+    def _screenshot_image(
+        self,
+        news_url: str,
+        img_url: str
+    ) -> Optional[str]:
+        """스크린샷으로 이미지 확보 (워터마크 우회)
+
+        Args:
+            news_url: 뉴스 기사 URL
+            img_url: 이미지 URL
+
+        Returns:
+            스크린샷 이미지 경로 or None
+        """
+        try:
+            from selenium import webdriver
+            from selenium.webdriver.chrome.options import Options
+            from selenium.webdriver.chrome.service import Service
+            from selenium.webdriver.common.by import By
+            from selenium.webdriver.support.ui import WebDriverWait
+            from selenium.webdriver.support import expected_conditions as EC
+            from webdriver_manager.chrome import ChromeDriverManager
+            import tempfile
+
+            # 헤드리스 모드 설정
+            chrome_options = Options()
+            chrome_options.add_argument('--headless')
+            chrome_options.add_argument('--no-sandbox')
+            chrome_options.add_argument('--disable-dev-shm-usage')
+            chrome_options.add_argument('--disable-gpu')
+
+            # WebDriver 자동 설치 및 실행
+            service = Service(ChromeDriverManager().install())
+            driver = webdriver.Chrome(service=service, options=chrome_options)
+            driver.set_window_size(1920, 1080)
+
+            try:
+                # 기사 페이지 로드
+                driver.get(news_url)
+
+                # 이미지 로드 대기 (최대 10초)
+                WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located((By.TAG_NAME, "img"))
+                )
+
+                # 이미지 요소 찾기
+                images = driver.find_elements(By.TAG_NAME, "img")
+                target_img = None
+
+                for img in images:
+                    src = img.get_attribute('src')
+                    if src and img_url in src:
+                        target_img = img
+                        break
+
+                if not target_img:
+                    logger.warning(f"이미지 요소를 찾을 수 없음: {img_url}")
+                    return None
+
+                # 스크린샷 저장
+                temp_file = tempfile.NamedTemporaryFile(
+                    delete=False,
+                    suffix='.png',
+                    dir=tempfile.gettempdir()
+                )
+
+                target_img.screenshot(temp_file.name)
+                logger.info(f"스크린샷 저장: {temp_file.name}")
+
+                return temp_file.name
+
+            finally:
+                driver.quit()
+
+        except Exception as e:
+            logger.warning(f"스크린샷 실패 ({img_url}): {e}")
+            return None
+
+    def _get_clean_image(
+        self,
+        article_text: str,
+        article_keywords: List[str],
+        img_url: str,
+        news_url: str
+    ) -> Optional[str]:
+        """깨끗한 이미지 확보 (워터마크 제거/우회 + 품질 검증)
+
+        전략:
+        1. 기본 품질 체크 (파일 크기, 해상도)
+        2. 관련성 체크 (키워드 매칭)
+        3. 워터마크 위치 감지
+        4. 중앙 워터마크 → 원본 찾기 (실패 시 None)
+        5. 코너 워터마크 + 대기업/정부 → 원본 찾기 시도 → 실패 시 스크린샷
+        6. 코너 워터마크 + 기타 → 스크린샷
+
+        Args:
+            article_text: 기사 본문
+            article_keywords: 기사 키워드
+            img_url: 원본 이미지 URL (워터마크 있을 수 있음)
+            news_url: 뉴스 기사 URL
+
+        Returns:
+            깨끗한 이미지 URL/경로 or None
+        """
+        # 0. 기본 품질 체크 (파일 크기)
+        if not self._check_image_quality(img_url):
+            logger.debug(f"이미지 품질 부족: {img_url}")
+            return None
+
+        # 0-1. 해상도 체크 (최소 400px)
+        width, height = self._validate_image_dimensions(img_url)
+        if width and height:
+            if width < 400 or height < 300:
+                logger.debug(f"이미지 해상도 부족: {width}x{height}")
+                return None
+
+        # 0-2. 관련성 체크
+        if not self._check_image_relevance(img_url, article_keywords):
+            logger.debug(f"이미지 관련성 낮음: {img_url}")
+            return None
+
+        # 1. 워터마크 분석
+        watermark_pos = self._detect_watermark_position(img_url)
+
+        # 2. 워터마크 없으면 그대로 사용
+        if watermark_pos == "none":
+            return img_url
+
+        # 3. 중앙 워터마크 → 무조건 원본 찾기
+        if watermark_pos == "center":
+            orgs = self._extract_organizations(article_text)
+            for org in orgs:
+                original = self._find_original_from_newsroom(
+                    org,
+                    article_keywords
+                )
+                if original:
+                    return original
+
+            # 원본 못 찾으면 None (이미지 없이 발행)
+            logger.warning(f"중앙 워터마크 이미지 원본 못 찾음: {img_url}")
+            return None
+
+        # 4. 코너 워터마크 → 출처에 따라 결정
+        if self._should_find_original(article_text, watermark_pos):
+            # 대기업/정부 → 원본 찾기 시도
+            orgs = self._extract_organizations(article_text)
+            for org in orgs:
+                original = self._find_original_from_newsroom(
+                    org,
+                    article_keywords
+                )
+                if original:
+                    return original
+
+            # 원본 못 찾으면 스크린샷 폴백
+            logger.info(f"원본 못 찾음, 스크린샷 시도: {img_url}")
+            screenshot = self._screenshot_image(news_url, img_url)
+            if screenshot:
+                return screenshot
+
+            # 스크린샷도 실패하면 원본 그대로 (워터마크 있지만)
+            return img_url
+
+        else:
+            # 중소기업/연예 → 바로 스크린샷
+            screenshot = self._screenshot_image(news_url, img_url)
+            if screenshot:
+                return screenshot
+
+            # 스크린샷 실패하면 원본 그대로
+            return img_url
