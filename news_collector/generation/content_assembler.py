@@ -545,6 +545,9 @@ class ContentAssembler:
         if not source_news:
             return self._empty_content()
 
+        # 토픽 필터링: 검색 키워드와 관련 없는 기사 제거 (토픽 혼합 방지)
+        source_news = self._filter_relevant_articles(source_news, search_keywords)
+
         # 본문 확장이 필요한지 확인
         total_body_length = sum(len(n.body or "") for n in source_news)
         avg_body_length = total_body_length / len(source_news) if source_news else 0
@@ -660,6 +663,64 @@ class ContentAssembler:
             primary_source_id=primary_source_id,
         )
 
+    def _filter_relevant_articles(
+        self,
+        news_list: List[NewsWithScores],
+        search_keywords: Optional[List[str]] = None,
+    ) -> List[NewsWithScores]:
+        """검색 키워드 기반 관련 기사만 필터링 (토픽 혼합 방지).
+
+        예: 'AI' 검색 시 인공지능 AI 기사만 유지, 조류독감(AI) 기사 제외.
+        각 기사의 제목과 본문 앞부분에서 키워드 관련성을 평가하여
+        관련 없는 기사를 필터링합니다.
+        """
+        if not search_keywords or len(news_list) <= 1:
+            return news_list
+
+        scored_articles = []
+        for news in news_list:
+            title_lower = (news.title or "").lower()
+            body_prefix = ((news.body or "")[:300]).lower()
+
+            relevance = 0
+            for kw in search_keywords:
+                kw_lower = kw.lower()
+                if kw_lower in title_lower:
+                    relevance += 3  # 제목 매칭 = 높은 관련도
+                if kw_lower in body_prefix:
+                    relevance += 1  # 본문 앞부분 매칭
+
+            scored_articles.append((news, relevance))
+
+        # 관련도 점수가 있는 기사만 유지
+        relevant = [news for news, score in scored_articles if score > 0]
+
+        if relevant:
+            # 관련 기사가 있으면, 가장 높은 점수의 절반 미만인 기사 추가 필터링
+            # (같은 키워드를 포함하지만 토픽이 다른 경우 제거)
+            max_score = max(score for _, score in scored_articles if score > 0)
+            if max_score > 3:
+                # 관련도 차이가 큰 기사들 제거 (약한 관련 = 다른 토픽일 가능성)
+                strongly_relevant = [
+                    news for news, score in scored_articles
+                    if score >= max_score * 0.4
+                ]
+                if strongly_relevant:
+                    logger.debug(
+                        "토픽 필터링: %d -> %d 기사 (키워드: %s)",
+                        len(news_list), len(strongly_relevant), search_keywords
+                    )
+                    return strongly_relevant
+
+            logger.debug(
+                "토픽 필터링: %d -> %d 기사 (키워드: %s)",
+                len(news_list), len(relevant), search_keywords
+            )
+            return relevant
+
+        # 관련 기사가 하나도 없으면 원본 반환
+        return news_list
+
     def _enrich_news_content(
         self,
         news_list: List[NewsWithScores],
@@ -727,11 +788,16 @@ class ContentAssembler:
         news_list: List[NewsWithScores],
         keywords: Optional[List[str]] = None,
     ) -> List[ClassifiedSentence]:
-        """문장 추출 및 분류"""
+        """문장 추출 및 분류 (오피니언/칼럼 기사 제외)"""
         all_sentences: List[ClassifiedSentence] = []
         keywords = keywords or []
 
         for news in news_list:
+            # 오피니언/칼럼 기사는 중요도를 대폭 낮춤 (완전 제외 대신 가중치 감소)
+            is_opinion = self._is_opinion_article(news)
+            if is_opinion:
+                logger.debug("오피니언/칼럼 기사 감지 (중요도 감소): %s", (news.title or "")[:40])
+
             body = news.body or ""
             # 문장 분리
             raw_sentences = self._split_sentences(body)
@@ -767,6 +833,10 @@ class ContentAssembler:
                     matched_keywords=matched,
                     role=role,
                 )
+
+                # 오피니언/칼럼 기사의 문장은 중요도 대폭 감소
+                if is_opinion:
+                    importance *= 0.2
 
                 all_sentences.append(ClassifiedSentence(
                     text=sent,
@@ -846,13 +916,27 @@ class ContentAssembler:
         }
         role_score = role_weights.get(role, 0.5)
 
+        # 6. 뉴스가치 키워드 보너스 (중요한 사건에 가중치)
+        newsworthy_keywords = [
+            '하한가', '상한가', '급등', '급락', '폭락', '폭등',
+            '사상최고', '사상최대', '사상최저', '역대최', '신기록',
+            '긴급', '속보', '비상', '파산', '부도', '서킷브레이커',
+            '대폭', '전면', '중단', '재개', '철수', '파업',
+        ]
+        newsworthy_bonus = 0.0
+        for nw in newsworthy_keywords:
+            if nw in sentence:
+                newsworthy_bonus = 0.15
+                break
+
         # 가중 평균
         importance = (
             keyword_score * weights.get("keyword_match", 0.35) +
             position_score * weights.get("position_score", 0.20) +
             number_score * weights.get("has_number", 0.10) +
             length_score * weights.get("sentence_length", 0.10) +
-            role_score * 0.25  # 역할 가중치는 별도
+            role_score * 0.25 +  # 역할 가중치는 별도
+            newsworthy_bonus  # 뉴스가치 보너스
         )
 
         return min(importance, 1.0)
@@ -932,6 +1016,15 @@ class ContentAssembler:
 
         return False
 
+    # 매체명 목록 (인라인 필터링용)
+    _MEDIA_NAMES = (
+        '뉴스1', '연합뉴스', '조선일보', '중앙일보', '한국일보', '경향신문',
+        '동아일보', '매일경제', '한국경제', '머니투데이', '뉴시스', 'YTN',
+        'KBS', 'MBC', 'SBS', 'JTBC', '이데일리', '파이낸셜뉴스', '서울신문',
+        '세계일보', '문화일보', '아시아경제', '헤럴드경제', '디지털타임스',
+        '전자신문', '한겨레', 'CBS', 'TV조선', '채널A', 'MBN', '아주경제',
+    )
+
     # 저작권/면책/광고/바이라인 문장 판별용 패턴
     _BOILERPLATE_PATTERNS = [
         # 저작권/면책
@@ -985,12 +1078,81 @@ class ContentAssembler:
         re.compile(r'(시청|구독|좋아요|알림 설정).*(부탁|감사)'),
         # 대괄호 안 인물명 (캡션 스타일)
         re.compile(r'\[.{2,10}\s+(대통령|장관|의원|CEO|대표|국장|본부장)\]'),
+        # ── 추가 패턴: 매체명 인라인 필터링 ──
+        # 문장 끝에 매체명만 남은 경우 (예: "전기차 일제 급등(종합) 뉴스1")
+        re.compile(r'\(종합\d*보?\)\s*(뉴스1|연합뉴스|뉴시스)'),
+        # 원본 헤드라인이 그대로 삽입된 경우 (마침표 없이 끝나는 짧은 문장 + 매체명)
+        re.compile(r'^.{5,60}\s+(뉴스1|연합뉴스|조선일보|중앙일보|한국일보|경향신문|동아일보|매일경제|한국경제|뉴시스)$'),
+        # ── 추가 패턴: 오피니언/칼럼 특유 표현 ──
+        # 의문형 도발 ("~것 아닙니까?", "~한다는 거죠?")
+        re.compile(r'(것|거)\s*(아닙니까|아니겠습니까|아닌가요)\s*\??'),
+        # 칼럼 특유 서술 ("~째가라면 서러워할", "~의 원톱은")
+        re.compile(r'(째가라면\s*서러워|원톱은|투톱답)'),
+        # 오적/n적 표현 (논썰 등)
+        re.compile(r'.{2,6}오적'),
+        # ── 추가 패턴: 원본 헤드라인 삽입 감지 ──
+        # 마침표 없이 끝나는 헤드라인 스타일 (제목형 문장)
+        re.compile(r'^.{5,50}…[가-힣]+\s*(터지나|주목|대응|전망|관측|논란)$'),
+        # 브라우저 안내 메시지
+        re.compile(r'(읽어주기|브라우저에서만)'),
+        # 광고 마커 (AD)
+        re.compile(r'^AD$'),
+        # ── 방송 뉴스 아티팩트 ──
+        # 방송 리포트/앵커/기자 태그 (문장 시작)
+        re.compile(r'^\[리포트\]'),
+        re.compile(r'^\[앵커\]'),
+        re.compile(r'^\[기자\]'),
+        re.compile(r'^\[인터뷰\]'),
+        re.compile(r'^\[현장음\]'),
+        re.compile(r'^\[녹취\]'),
+        re.compile(r'^\[영상\]'),
+        # 방송 인용: [이름/소속 : "인용문"] 또는 [이름/소속]
+        re.compile(r'\[.{2,15}\s*/\s*[^]]{2,20}\s*:'),
+        re.compile(r'\[.{2,10}\s*/\s*[^]]{2,20}\]'),
+        # 방송 앵커/기자 이름 마커
+        re.compile(r'^\[.{2,8}\s+(기자|앵커|특파원|리포터)\]'),
+        # 방송 프로그램 큐시트 마커
+        re.compile(r'^(앵커|기자|리포터)\s*[:>]\s*'),
+    ]
+
+    # 오피니언/칼럼 감지 패턴 (기사 전체 레벨에서 필터)
+    _OPINION_INDICATORS = [
+        re.compile(r'\[논썰\]'),
+        re.compile(r'\[칼럼\]'),
+        re.compile(r'\[사설\]'),
+        re.compile(r'\[시론\]'),
+        re.compile(r'\[기고\]'),
+        re.compile(r'\[논단\]'),
+        re.compile(r'\[이슈\+\]'),
+        re.compile(r'\[오피니언\]'),
+        re.compile(r'\[만평\]'),
+        re.compile(r'\[커버스토리\]'),
     ]
 
     def _is_boilerplate_sentence(self, sentence: str) -> bool:
-        """저작권/면책/광고 문장인지 확인"""
+        """저작권/면책/광고/인라인 매체명 문장인지 확인"""
         for pattern in self._BOILERPLATE_PATTERNS:
             if pattern.search(sentence):
+                return True
+
+        # 추가: 문장 끝에 매체명이 단독으로 붙어있는 경우 필터링
+        # 예: "기술주 랠리에 테슬라도 3.50% 급등 뉴스1"
+        stripped = sentence.rstrip('.!?').strip()
+        for media in self._MEDIA_NAMES:
+            if stripped.endswith(f' {media}') or stripped.endswith(f'\t{media}'):
+                # 매체명을 제외한 부분이 온전한 문장인지 확인
+                without_media = stripped[:-(len(media))].strip()
+                # 60자 미만이면 관련 기사 헤드라인일 가능성이 높음
+                if len(without_media) < 60:
+                    return True
+
+        return False
+
+    def _is_opinion_article(self, news: 'NewsWithScores') -> bool:
+        """오피니언/칼럼 기사인지 확인"""
+        title = news.title or ""
+        for pattern in self._OPINION_INDICATORS:
+            if pattern.search(title):
                 return True
         return False
 
@@ -1289,10 +1451,11 @@ class ContentAssembler:
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
     ) -> Dict[str, str]:
-        """분석 기사 (1500-3000자)"""
+        """분석 기사 (1500-3000자) - 다중 소스 통합 (primary source 제한 해제)"""
         used_texts: Set[str] = set()
 
-        # 현황 섹션
+        # 분석 기사는 다중 소스 통합이 핵심이므로 primary source 제한을 두지 않음
+        # 현황 섹션 (모든 소스에서 가장 중요한 팩트)
         current_sentences = [
             s for s in sentences if s.role in ("lead", "fact", "statistic")
         ][:5]
@@ -1653,8 +1816,11 @@ class ContentAssembler:
         if not img_url.startswith('http'):
             return False
 
-        # 플레이스홀더/템플릿 변수 제외
+        # 플레이스홀더/템플릿 변수 제외 (중괄호 변수 포함)
         if '{{' in img_url or '}}' in img_url or '{%' in img_url or '${' in img_url or '%%' in img_url:
+            return False
+        # {wcms_img} 등 치환되지 않은 변수
+        if re.search(r'\{[a-zA-Z_]+\}', img_url):
             return False
 
         url_lower = img_url.lower()
@@ -1704,6 +1870,8 @@ class ContentAssembler:
             'pixel', 'tracker', 'spacer', 'blank', 'transparent',
             '1x1', '1px', 'sprite', 'emoji', 'avatar', 'profile',
             'nav_', 'menu_', 'comment', 'reply', 'like', 'dislike',
+            # 로봇/검색 아이콘 (흔한 사이트 UI)
+            'robot.png', 'search.png', 'search_icon', 'robots.png',
             # UI 장식/불릿/아이콘 이미지
             'bul_', '_bul', 'bullet', 'dot_', 'arr_', 'arrow_',
             'ico_', '_ico', 'g_circle', 'circle_',

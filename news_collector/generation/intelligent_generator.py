@@ -284,36 +284,81 @@ class IntelligentNewsGenerator:
         return "최신 뉴스"
 
     def generate_title(self, facts: ExtractedFacts) -> str:
-        """팩트 기반으로 새로운 제목 생성"""
+        """팩트 기반으로 새로운 제목 생성 (완전한 문장형 제목)"""
         # 엔티티와 액션 조합
         if facts.entities and facts.key_actions:
             entity = facts.entities[0]
             action = facts.key_actions[0]
 
+            # 액션별 자연스러운 서술어 매핑
+            action_verb_map = {
+                '상승': '상승', '하락': '하락', '급등': '급등', '급락': '급락',
+                '돌파': '돌파', '달성': '달성', '기록': '기록',
+                '발표': '발표', '공개': '공개', '출시': '출시',
+                '증가': '증가', '감소': '감소', '확대': '확대', '축소': '축소',
+                '투자': '투자 확대', '인수': '인수', '합병': '합병',
+                '개발': '개발', '생산': '생산 확대', '판매': '판매',
+                '진출': '진출', '철수': '철수', '중단': '중단', '재개': '재개',
+                '수출': '수출', '협력': '협력',
+            }
+            verb = action_verb_map.get(action, action)
+
             # 숫자가 있으면 포함 (가장 중요한 숫자만)
             if facts.numbers:
                 number, category = facts.numbers[0]
-                # 금액인 경우
+                # 금액인 경우: "삼성전자, 시총 1000조원 돌파"
                 if category == '금액':
-                    return f"{entity}, {number} {action}"
-                # 비율인 경우
+                    return f"{entity}, {number} {verb}"
+                # 비율인 경우: "테슬라, 주가 3.5% 급등"
                 elif category == '비율':
-                    return f"{entity}, {number} {action}"
+                    # 주가/실적 맥락 추가
+                    context = self._infer_number_context(facts, category)
+                    if context:
+                        return f"{entity}, {context} {number} {verb}"
+                    return f"{entity}, {number} {verb}"
                 else:
-                    return f"{entity}, {action}"
+                    return f"{entity}, {number} {verb}"
 
-            return f"{entity}, {action}"
+            return f"{entity}, {action} 소식"
 
         # 엔티티만 있는 경우
         if facts.entities:
             entity = facts.entities[0]
             if facts.numbers:
                 number, category = facts.numbers[0]
+                context = self._infer_number_context(facts, category)
+                if context:
+                    return f"{entity}, {context} {number} 기록"
                 return f"{entity}, {number} 기록"
             return f"{entity} 최신 동향"
 
         # 토픽만 있는 경우
         return f"{facts.main_topic} 업계 동향"
+
+    def _infer_number_context(self, facts: ExtractedFacts, category: str) -> str:
+        """숫자에 맥락 추가 (예: 비율이면 '주가', '실적' 등)"""
+        # 관련 키워드에서 맥락 추론
+        context_keywords = {
+            '주가': '주가', '시총': '시총', '시가총액': '시총',
+            '매출': '매출', '영업이익': '영업이익', '순이익': '순이익',
+            '점유율': '점유율', '성장률': '성장률',
+            '수출': '수출', '수입': '수입', '흑자': '경상흑자',
+        }
+        all_actions = facts.key_actions or []
+        all_entities = facts.entities or []
+        combined = ' '.join(all_actions + all_entities)
+
+        for keyword, context in context_keywords.items():
+            if keyword in combined or keyword in facts.main_topic:
+                return context
+
+        # 비율이면 기본적으로 실적 관련
+        if category == '비율':
+            # 주가 관련 액션이면 '주가'
+            price_actions = {'상승', '하락', '급등', '급락', '반등'}
+            if any(a in price_actions for a in all_actions):
+                return '주가'
+        return ""
 
     def generate_lead(self, facts: ExtractedFacts) -> str:
         """리드 문단 생성 (5W1H)"""

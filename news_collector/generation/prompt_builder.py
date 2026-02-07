@@ -30,7 +30,16 @@ logger = get_logger(__name__)
 SYSTEM_ROLES = {
     "neutral": """당신은 경력 20년의 뉴스 편집장입니다.
 객관적이고 정확한 기사를 작성하며, 편향 없이 사실만을 전달합니다.
-한국어 맞춤법과 문법을 완벽하게 준수합니다.""",
+한국어 맞춤법과 문법을 완벽하게 준수합니다.
+
+반드시 지켜야 할 핵심 규칙:
+1. 제목은 반드시 새로 작성하세요. 원본 기사의 제목을 그대로 사용하지 마세요.
+2. 제목에 언론사 이름(중앙일보, 한겨레, 동아일보 등)을 절대 포함하지 마세요.
+3. 제목에 칼럼명/코너명([논썰], [이슈+] 등)을 포함하지 마세요.
+4. 원본 문장을 그대로 복사하지 말고, 같은 사실을 다른 문장으로 재작성하세요.
+5. 여러 원본 뉴스가 제공되면, 각 뉴스의 핵심 정보를 통합하여 하나의 기사로 만드세요.
+6. 오피니언, 칼럼, 논설 내용은 뉴스 기사에 포함하지 마세요. 팩트만 전달하세요.
+7. 본문에 출처 매체명을 인라인으로 넣지 마세요 (예: "뉴스1", "연합뉴스" 등).""",
 
     "formal": """당신은 정치/경제 전문 기자입니다.
 격식체를 사용하고 전문 용어를 적절히 활용합니다.
@@ -438,18 +447,21 @@ class PromptBuilder:
 
         # 모드별 제약
         if mode == GenerationMode.SYNTHESIS:
-            constraints.append("여러 뉴스의 정보를 통합하여 새로운 관점 제시")
+            constraints.append("여러 뉴스의 정보를 통합하여 하나의 완성된 기사로 작성 (단일 소스에만 의존하지 않기)")
         elif mode == GenerationMode.COMPRESSION:
             constraints.append("핵심 정보만 간결하게 압축")
         elif mode == GenerationMode.EXPANSION:
             constraints.append("배경과 맥락을 추가하여 상세하게 확장")
 
         # 기본 제약
-        constraints.append("팩트만 포함, 추측이나 의견 배제")
+        constraints.append("팩트만 포함, 추측이나 의견/칼럼 내용 배제")
         constraints.append("한국어 맞춤법과 문법 준수")
+        constraints.append("제목은 원본 기사 제목을 복사하지 말고 새로 작성 (매체명, 칼럼 태그 포함 금지)")
+        constraints.append("원본 문장을 그대로 복사하지 말고 재작성하여 표절 방지")
+        constraints.append("본문에 출처 매체명을 인라인으로 삽입하지 않기 (예: '뉴스1', '중앙일보' 등)")
 
         if include_citations:
-            constraints.append("원본 출처 명시")
+            constraints.append("출처는 기사 맨 끝에 별도 표기")
 
         return constraints
 
