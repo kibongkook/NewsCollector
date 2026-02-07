@@ -1,0 +1,188 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 93.0,
+    "avg_char_count": 590.0,
+    "avg_generation_time_ms": 484.8,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 1
+    },
+    "type_distribution": {
+      "visual": 4,
+      "standard": 1
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "북한",
+      "timestamp": "2026-02-07T08:40:45.989241",
+      "search_count": 5,
+      "search_time_ms": 951,
+      "generation_success": true,
+      "generation_time_ms": 522,
+      "generated_char_count": 837,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 49,
+        "summary_length": 168,
+        "body_length": 837,
+        "total_length": 886,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "증시",
+      "timestamp": "2026-02-07T08:41:01.816948",
+      "search_count": 5,
+      "search_time_ms": 835,
+      "generation_success": true,
+      "generation_time_ms": 588,
+      "generated_char_count": 679,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 44,
+        "summary_length": 626,
+        "body_length": 679,
+        "total_length": 723,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "전기차",
+      "timestamp": "2026-02-07T08:41:12.810775",
+      "search_count": 5,
+      "search_time_ms": 862,
+      "generation_success": true,
+      "generation_time_ms": 478,
+      "generated_char_count": 503,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 36,
+        "summary_length": 65,
+        "body_length": 503,
+        "total_length": 539,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "일본",
+      "timestamp": "2026-02-07T08:41:23.844875",
+      "search_count": 5,
+      "search_time_ms": 957,
+      "generation_success": true,
+      "generation_time_ms": 399,
+      "generated_char_count": 183,
+      "source_count": 5,
+      "score": 65.0,
+      "issues": [
+        "BODY_TOO_SHORT:183"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": false,
+        "title_length": 56,
+        "summary_length": 51,
+        "body_length": 183,
+        "total_length": 239,
+        "issues": [
+          "BODY_TOO_SHORT:183"
+        ]
+      },
+      "images": {
+        "total_count": 0,
+        "valid_count": 0,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "챗GPT",
+      "timestamp": "2026-02-07T08:41:37.582505",
+      "search_count": 5,
+      "search_time_ms": 771,
+      "generation_success": true,
+      "generation_time_ms": 437,
+      "generated_char_count": 748,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 27,
+        "summary_length": 484,
+        "body_length": 748,
+        "total_length": 775,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

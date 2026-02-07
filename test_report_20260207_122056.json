@@ -1,0 +1,357 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "successful_tests": 10,
+    "failed_tests": 0,
+    "avg_score": 92.0,
+    "avg_char_count": 696.4,
+    "avg_generation_time_ms": 4542.9,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 2
+    },
+    "type_distribution": {
+      "visual": 7,
+      "standard": 3
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "전기차",
+      "timestamp": "2026-02-07T12:18:11.739280",
+      "search_count": 5,
+      "search_time_ms": 1062,
+      "generation_success": true,
+      "generation_time_ms": 5792,
+      "generated_char_count": 784,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 29,
+        "summary_length": 456,
+        "body_length": 784,
+        "total_length": 813,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "외교",
+      "timestamp": "2026-02-07T12:18:32.595442",
+      "search_count": 5,
+      "search_time_ms": 1595,
+      "generation_success": true,
+      "generation_time_ms": 6616,
+      "generated_char_count": 1894,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 45,
+        "summary_length": 1804,
+        "body_length": 1894,
+        "total_length": 1939,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "정치",
+      "timestamp": "2026-02-07T12:18:53.546201",
+      "search_count": 5,
+      "search_time_ms": 889,
+      "generation_success": true,
+      "generation_time_ms": 3332,
+      "generated_char_count": 770,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 30,
+        "summary_length": 567,
+        "body_length": 770,
+        "total_length": 800,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "날씨",
+      "timestamp": "2026-02-07T12:19:11.183940",
+      "search_count": 5,
+      "search_time_ms": 902,
+      "generation_success": true,
+      "generation_time_ms": 2576,
+      "generated_char_count": 397,
+      "source_count": 5,
+      "score": 85.0,
+      "issues": [
+        "BODY_TOO_SHORT:397"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 38,
+        "summary_length": 374,
+        "body_length": 397,
+        "total_length": 435,
+        "issues": [
+          "BODY_TOO_SHORT:397"
+        ]
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "배달",
+      "timestamp": "2026-02-07T12:19:22.970284",
+      "search_count": 5,
+      "search_time_ms": 902,
+      "generation_success": true,
+      "generation_time_ms": 3174,
+      "generated_char_count": 560,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 46,
+        "summary_length": 133,
+        "body_length": 560,
+        "total_length": 606,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 6,
+      "keyword": "LG",
+      "timestamp": "2026-02-07T12:19:41.067209",
+      "search_count": 5,
+      "search_time_ms": 971,
+      "generation_success": true,
+      "generation_time_ms": 6248,
+      "generated_char_count": 645,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 426,
+        "body_length": 645,
+        "total_length": 693,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 7,
+      "keyword": "챗GPT",
+      "timestamp": "2026-02-07T12:20:02.054057",
+      "search_count": 5,
+      "search_time_ms": 1093,
+      "generation_success": true,
+      "generation_time_ms": 6000,
+      "generated_char_count": 230,
+      "source_count": 5,
+      "score": 75.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 55,
+        "body_length": 230,
+        "total_length": 273,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 8,
+      "keyword": "전기차",
+      "timestamp": "2026-02-07T12:20:22.184647",
+      "search_count": 5,
+      "search_time_ms": 985,
+      "generation_success": true,
+      "generation_time_ms": 4825,
+      "generated_char_count": 890,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 29,
+        "summary_length": 456,
+        "body_length": 890,
+        "total_length": 919,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 9,
+      "keyword": "애플",
+      "timestamp": "2026-02-07T12:20:35.098513",
+      "search_count": 5,
+      "search_time_ms": 956,
+      "generation_success": true,
+      "generation_time_ms": 3869,
+      "generated_char_count": 397,
+      "source_count": 5,
+      "score": 90.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 47,
+        "summary_length": 339,
+        "body_length": 397,
+        "total_length": 444,
+        "issues": []
+      },
+      "images": {
+        "total_count": 4,
+        "valid_count": 4,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 10,
+      "keyword": "날씨",
+      "timestamp": "2026-02-07T12:20:52.206023",
+      "search_count": 5,
+      "search_time_ms": 363,
+      "generation_success": true,
+      "generation_time_ms": 2997,
+      "generated_char_count": 397,
+      "source_count": 5,
+      "score": 85.0,
+      "issues": [
+        "BODY_TOO_SHORT:397"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 38,
+        "summary_length": 374,
+        "body_length": 397,
+        "total_length": 435,
+        "issues": [
+          "BODY_TOO_SHORT:397"
+        ]
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

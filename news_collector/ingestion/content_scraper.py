@@ -25,15 +25,44 @@ USER_AGENT = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
 
 
 @dataclass
+class ImageInfo:
+    """이미지 메타데이터 (Phase 2)
+
+    URL뿐 아니라 alt, title, class 등 메타데이터를 포함하여
+    이미지-뉴스 연관성을 더 정확히 판단할 수 있음
+    """
+    url: str                    # 이미지 URL
+    alt: str = ""               # alt 속성
+    title: str = ""             # title 속성
+    css_class: str = ""         # class 속성
+    position: int = 0           # HTML 내 등장 순서 (0부터 시작)
+    in_article: bool = True     # article 태그 내부 여부
+
+    def get_relevance_keywords(self) -> List[str]:
+        """연관성 판단에 사용할 키워드 추출"""
+        keywords = []
+        if self.alt:
+            keywords.extend(self.alt.lower().split())
+        if self.title:
+            keywords.extend(self.title.lower().split())
+        return keywords
+
+
+@dataclass
 class ScrapedContent:
     """스크래핑된 콘텐츠"""
     url: str
     full_body: str
     title: Optional[str] = None
-    images: List[str] = field(default_factory=list)  # 이미지 URL 목록
+    images: List[ImageInfo] = field(default_factory=list)  # Phase 2: List[str] → List[ImageInfo]
     success: bool = False
     error: Optional[str] = None
     response_time_ms: int = 0
+
+    @property
+    def image_urls(self) -> List[str]:
+        """하위 호환성: List[ImageInfo] → List[str]"""
+        return [img.url for img in self.images]
 
 
 @dataclass
@@ -229,7 +258,7 @@ class ContentScraper:
 
                 # 제목 및 이미지 추출
                 title = None
-                images: List[str] = []
+                images: List[ImageInfo] = []  # Phase 2: List[str] → List[ImageInfo]
                 try:
                     metadata = trafilatura.extract_metadata(downloaded)
                     if metadata:
@@ -237,15 +266,25 @@ class ContentScraper:
                         # 메타데이터에서 대표 이미지 추출
                         image = getattr(metadata, 'image', None)
                         if image:
-                            images.append(image)
+                            # Phase 2: str → ImageInfo 변환
+                            img_info = ImageInfo(
+                                url=image,
+                                alt="",
+                                title="Metadata Image",
+                                css_class="metadata-image",
+                                position=-2,  # 메타데이터 이미지는 최우선
+                                in_article=True
+                            )
+                            images.append(img_info)
                 except Exception:
                     pass
 
                 # HTML에서 추가 이미지 추출
                 extracted_images = self._extract_images_from_html(downloaded, resolved_url)
-                for img in extracted_images:
-                    if img not in images:
-                        images.append(img)
+                for img_info in extracted_images:
+                    # Phase 2: URL 기반 중복 체크
+                    if not any(existing.url == img_info.url for existing in images):
+                        images.append(img_info)
 
                 # 최대 5개 이미지로 제한
                 images = images[:5]
@@ -279,24 +318,86 @@ class ContentScraper:
 
         return ScrapedContent(url=url, full_body="", error="최대 재시도 초과")
 
-    def _extract_images_from_html(self, html: str, base_url: str) -> List[str]:
-        """HTML에서 뉴스 관련 이미지 URL 추출"""
-        images: List[str] = []
+    def _extract_images_from_html(self, html: str, base_url: str) -> List[ImageInfo]:
+        """HTML에서 뉴스 관련 이미지 URL + 메타데이터 추출 (Phase 2)
+
+        변경사항:
+        - 반환 타입: List[str] → List[ImageInfo]
+        - 메타데이터 수집: alt, title, class 추가
+        - 등장 순서 저장: position 추가
+        """
+        images: List[ImageInfo] = []
+        seen_urls: set = set()
+        position = 0
+
         try:
-            # 정규식으로 img 태그의 src 추출
-            img_patterns = [
-                r'<img[^>]+src=["\']([^"\']+)["\']',
+            # 정규식으로 img 태그 전체 추출 (src + 속성들)
+            # <img ... src="..." alt="..." title="..." class="..." ...>
+            img_tag_pattern = r'<img[^>]+>'
+            img_tags = re.findall(img_tag_pattern, html, re.IGNORECASE)
+
+            for img_tag in img_tags:
+                # src 추출
+                src_match = re.search(r'src=["\']([^"\']+)["\']', img_tag, re.IGNORECASE)
+                if not src_match:
+                    continue
+
+                img_url = self._normalize_image_url(src_match.group(1), base_url)
+                if not img_url or not self._is_valid_news_image(img_url):
+                    continue
+
+                if img_url in seen_urls:
+                    continue
+
+                # alt 추출
+                alt_match = re.search(r'alt=["\']([^"\']*)["\']', img_tag, re.IGNORECASE)
+                alt_text = alt_match.group(1) if alt_match else ""
+
+                # title 추출
+                title_match = re.search(r'title=["\']([^"\']*)["\']', img_tag, re.IGNORECASE)
+                title_text = title_match.group(1) if title_match else ""
+
+                # class 추출
+                class_match = re.search(r'class=["\']([^"\']*)["\']', img_tag, re.IGNORECASE)
+                class_text = class_match.group(1) if class_match else ""
+
+                # ImageInfo 생성
+                image_info = ImageInfo(
+                    url=img_url,
+                    alt=alt_text,
+                    title=title_text,
+                    css_class=class_text,
+                    position=position,
+                    in_article=True  # 기본값 (article 태그 감지는 나중에 추가 가능)
+                )
+
+                images.append(image_info)
+                seen_urls.add(img_url)
+                position += 1
+
+            # og:image도 추가 (메타데이터는 없지만 대표 이미지이므로 position 0으로)
+            og_patterns = [
                 r'<meta[^>]+property=["\']og:image["\'][^>]+content=["\']([^"\']+)["\']',
                 r'<meta[^>]+content=["\']([^"\']+)["\'][^>]+property=["\']og:image["\']',
             ]
 
-            for pattern in img_patterns:
+            for pattern in og_patterns:
                 matches = re.findall(pattern, html, re.IGNORECASE)
                 for match in matches:
                     img_url = self._normalize_image_url(match, base_url)
-                    if img_url and self._is_valid_news_image(img_url):
-                        if img_url not in images:
-                            images.append(img_url)
+                    if img_url and self._is_valid_news_image(img_url) and img_url not in seen_urls:
+                        # og:image는 대표 이미지이므로 우선순위 높게 (position = -1)
+                        image_info = ImageInfo(
+                            url=img_url,
+                            alt="",  # og:image는 alt 없음
+                            title="Open Graph Image",
+                            css_class="og-image",
+                            position=-1,  # 가장 우선
+                            in_article=True
+                        )
+                        # 맨 앞에 삽입
+                        images.insert(0, image_info)
+                        seen_urls.add(img_url)
 
         except Exception as e:
             logger.debug("이미지 추출 실패: %s", e)

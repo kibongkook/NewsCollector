@@ -1,0 +1,347 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "successful_tests": 10,
+    "failed_tests": 0,
+    "avg_score": 97.5,
+    "avg_char_count": 741.4,
+    "avg_generation_time_ms": 5418.4,
+    "issue_counts": {},
+    "type_distribution": {
+      "data": 1,
+      "visual": 9
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "SK",
+      "timestamp": "2026-02-07T10:28:26.104115",
+      "search_count": 5,
+      "search_time_ms": 1010,
+      "generation_success": true,
+      "generation_time_ms": 1235,
+      "generated_char_count": 694,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 37,
+        "summary_length": 200,
+        "body_length": 694,
+        "total_length": 731,
+        "issues": []
+      },
+      "images": {
+        "total_count": 1,
+        "valid_count": 1,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "취업",
+      "timestamp": "2026-02-07T10:28:40.505131",
+      "search_count": 5,
+      "search_time_ms": 976,
+      "generation_success": true,
+      "generation_time_ms": 8155,
+      "generated_char_count": 627,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 35,
+        "summary_length": 302,
+        "body_length": 627,
+        "total_length": 662,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "물류",
+      "timestamp": "2026-02-07T10:28:59.295110",
+      "search_count": 5,
+      "search_time_ms": 1243,
+      "generation_success": true,
+      "generation_time_ms": 9577,
+      "generated_char_count": 1024,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 44,
+        "summary_length": 647,
+        "body_length": 1024,
+        "total_length": 1068,
+        "issues": []
+      },
+      "images": {
+        "total_count": 10,
+        "valid_count": 10,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "현대차",
+      "timestamp": "2026-02-07T10:29:20.235879",
+      "search_count": 5,
+      "search_time_ms": 865,
+      "generation_success": true,
+      "generation_time_ms": 3942,
+      "generated_char_count": 880,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 44,
+        "summary_length": 492,
+        "body_length": 880,
+        "total_length": 924,
+        "issues": []
+      },
+      "images": {
+        "total_count": 4,
+        "valid_count": 4,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "5G",
+      "timestamp": "2026-02-07T10:29:38.436385",
+      "search_count": 5,
+      "search_time_ms": 962,
+      "generation_success": true,
+      "generation_time_ms": 4806,
+      "generated_char_count": 799,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 39,
+        "summary_length": 181,
+        "body_length": 799,
+        "total_length": 838,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 6,
+      "keyword": "환율",
+      "timestamp": "2026-02-07T10:29:57.641803",
+      "search_count": 5,
+      "search_time_ms": 1436,
+      "generation_success": true,
+      "generation_time_ms": 10247,
+      "generated_char_count": 503,
+      "source_count": 5,
+      "score": 90.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 29,
+        "summary_length": 449,
+        "body_length": 503,
+        "total_length": 532,
+        "issues": []
+      },
+      "images": {
+        "total_count": 9,
+        "valid_count": 9,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 7,
+      "keyword": "삼성전자",
+      "timestamp": "2026-02-07T10:30:22.357948",
+      "search_count": 5,
+      "search_time_ms": 1375,
+      "generation_success": true,
+      "generation_time_ms": 5261,
+      "generated_char_count": 520,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 50,
+        "summary_length": 389,
+        "body_length": 520,
+        "total_length": 570,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 8,
+      "keyword": "엔비디아",
+      "timestamp": "2026-02-07T10:30:41.670823",
+      "search_count": 5,
+      "search_time_ms": 1289,
+      "generation_success": true,
+      "generation_time_ms": 3388,
+      "generated_char_count": 678,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 32,
+        "summary_length": 610,
+        "body_length": 678,
+        "total_length": 710,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 9,
+      "keyword": "드라마",
+      "timestamp": "2026-02-07T10:30:55.489552",
+      "search_count": 5,
+      "search_time_ms": 1579,
+      "generation_success": true,
+      "generation_time_ms": 3576,
+      "generated_char_count": 610,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 44,
+        "summary_length": 541,
+        "body_length": 610,
+        "total_length": 654,
+        "issues": []
+      },
+      "images": {
+        "total_count": 4,
+        "valid_count": 4,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 10,
+      "keyword": "클라우드",
+      "timestamp": "2026-02-07T10:31:12.144900",
+      "search_count": 5,
+      "search_time_ms": 1251,
+      "generation_success": true,
+      "generation_time_ms": 3997,
+      "generated_char_count": 1079,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 40,
+        "summary_length": 916,
+        "body_length": 1079,
+        "total_length": 1119,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "summary": {
+    "total_tests": 2,
+    "successful_tests": 2,
+    "failed_tests": 0,
+    "avg_score": 100.0,
+    "avg_char_count": 553.5,
+    "avg_generation_time_ms": 457.5,
+    "issue_counts": {},
+    "type_distribution": {
+      "data": 1,
+      "visual": 1
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "NFT",
+      "timestamp": "2026-02-07T08:31:58.465394",
+      "search_count": 5,
+      "search_time_ms": 1275,
+      "generation_success": true,
+      "generation_time_ms": 493,
+      "generated_char_count": 459,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 141,
+        "body_length": 459,
+        "total_length": 502,
+        "issues": []
+      },
+      "images": {
+        "total_count": 1,
+        "valid_count": 1,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "애플",
+      "timestamp": "2026-02-07T08:32:14.941108",
+      "search_count": 5,
+      "search_time_ms": 956,
+      "generation_success": true,
+      "generation_time_ms": 422,
+      "generated_char_count": 648,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 47,
+        "summary_length": 116,
+        "body_length": 648,
+        "total_length": 695,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

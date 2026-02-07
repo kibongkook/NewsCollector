@@ -1,0 +1,181 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 92.0,
+    "avg_char_count": 572.6,
+    "avg_generation_time_ms": 6331.8,
+    "issue_counts": {},
+    "type_distribution": {
+      "visual": 5
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "정치",
+      "timestamp": "2026-02-07T12:09:42.830882",
+      "search_count": 5,
+      "search_time_ms": 1124,
+      "generation_success": true,
+      "generation_time_ms": 3282,
+      "generated_char_count": 865,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 30,
+        "summary_length": 567,
+        "body_length": 865,
+        "total_length": 895,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "손흥민",
+      "timestamp": "2026-02-07T12:09:58.270716",
+      "search_count": 5,
+      "search_time_ms": 1385,
+      "generation_success": true,
+      "generation_time_ms": 5836,
+      "generated_char_count": 581,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 47,
+        "summary_length": 455,
+        "body_length": 581,
+        "total_length": 628,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "아이돌",
+      "timestamp": "2026-02-07T12:10:17.642861",
+      "search_count": 5,
+      "search_time_ms": 1140,
+      "generation_success": true,
+      "generation_time_ms": 10380,
+      "generated_char_count": 210,
+      "source_count": 5,
+      "score": 70.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 58,
+        "summary_length": 157,
+        "body_length": 210,
+        "total_length": 268,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "날씨",
+      "timestamp": "2026-02-07T12:10:39.462634",
+      "search_count": 5,
+      "search_time_ms": 1030,
+      "generation_success": true,
+      "generation_time_ms": 3726,
+      "generated_char_count": 563,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 35,
+        "summary_length": 525,
+        "body_length": 563,
+        "total_length": 598,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "LG",
+      "timestamp": "2026-02-07T12:10:53.544264",
+      "search_count": 5,
+      "search_time_ms": 1353,
+      "generation_success": true,
+      "generation_time_ms": 8435,
+      "generated_char_count": 644,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 426,
+        "body_length": 644,
+        "total_length": 692,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

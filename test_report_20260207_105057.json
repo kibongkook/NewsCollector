@@ -1,0 +1,352 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "successful_tests": 10,
+    "failed_tests": 0,
+    "avg_score": 91.5,
+    "avg_char_count": 603.0,
+    "avg_generation_time_ms": 7432.3,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 1
+    },
+    "type_distribution": {
+      "visual": 10
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "건강",
+      "timestamp": "2026-02-07T10:47:25.838477",
+      "search_count": 5,
+      "search_time_ms": 934,
+      "generation_success": true,
+      "generation_time_ms": 7088,
+      "generated_char_count": 585,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 59,
+        "summary_length": 258,
+        "body_length": 585,
+        "total_length": 644,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "취업",
+      "timestamp": "2026-02-07T10:47:47.585520",
+      "search_count": 5,
+      "search_time_ms": 909,
+      "generation_success": true,
+      "generation_time_ms": 8547,
+      "generated_char_count": 627,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 35,
+        "summary_length": 302,
+        "body_length": 627,
+        "total_length": 662,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "국회",
+      "timestamp": "2026-02-07T10:48:07.753606",
+      "search_count": 5,
+      "search_time_ms": 1107,
+      "generation_success": true,
+      "generation_time_ms": 6904,
+      "generated_char_count": 610,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 33,
+        "summary_length": 312,
+        "body_length": 610,
+        "total_length": 643,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "의료",
+      "timestamp": "2026-02-07T10:48:29.140471",
+      "search_count": 5,
+      "search_time_ms": 995,
+      "generation_success": true,
+      "generation_time_ms": 5462,
+      "generated_char_count": 730,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 36,
+        "summary_length": 288,
+        "body_length": 730,
+        "total_length": 766,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "AI",
+      "timestamp": "2026-02-07T10:48:49.683086",
+      "search_count": 5,
+      "search_time_ms": 967,
+      "generation_success": true,
+      "generation_time_ms": 4156,
+      "generated_char_count": 842,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 411,
+        "body_length": 842,
+        "total_length": 890,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 6,
+      "keyword": "손흥민",
+      "timestamp": "2026-02-07T10:49:07.373525",
+      "search_count": 5,
+      "search_time_ms": 1334,
+      "generation_success": true,
+      "generation_time_ms": 8133,
+      "generated_char_count": 557,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 44,
+        "summary_length": 442,
+        "body_length": 557,
+        "total_length": 601,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 7,
+      "keyword": "교육",
+      "timestamp": "2026-02-07T10:49:31.419076",
+      "search_count": 5,
+      "search_time_ms": 908,
+      "generation_success": true,
+      "generation_time_ms": 10867,
+      "generated_char_count": 869,
+      "source_count": 5,
+      "score": 90.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 40,
+        "summary_length": 824,
+        "body_length": 869,
+        "total_length": 909,
+        "issues": []
+      },
+      "images": {
+        "total_count": 6,
+        "valid_count": 6,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 8,
+      "keyword": "챗GPT",
+      "timestamp": "2026-02-07T10:49:56.330634",
+      "search_count": 5,
+      "search_time_ms": 888,
+      "generation_success": true,
+      "generation_time_ms": 6648,
+      "generated_char_count": 128,
+      "source_count": 5,
+      "score": 60.0,
+      "issues": [
+        "BODY_TOO_SHORT:128"
+      ],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 60,
+        "summary_length": 75,
+        "body_length": 128,
+        "total_length": 188,
+        "issues": [
+          "BODY_TOO_SHORT:128"
+        ]
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 9,
+      "keyword": "날씨",
+      "timestamp": "2026-02-07T10:50:20.933918",
+      "search_count": 5,
+      "search_time_ms": 865,
+      "generation_success": true,
+      "generation_time_ms": 8678,
+      "generated_char_count": 455,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 33,
+        "summary_length": 388,
+        "body_length": 455,
+        "total_length": 488,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 10,
+      "keyword": "취업",
+      "timestamp": "2026-02-07T10:50:43.529103",
+      "search_count": 5,
+      "search_time_ms": 1102,
+      "generation_success": true,
+      "generation_time_ms": 7840,
+      "generated_char_count": 627,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 35,
+        "summary_length": 302,
+        "body_length": 627,
+        "total_length": 662,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

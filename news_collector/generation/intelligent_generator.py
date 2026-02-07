@@ -44,7 +44,7 @@ class IntelligentNewsGenerator:
             "{date} {entity}는 {action}을 발표했다.",
         ]
 
-    def extract_facts(self, news_list: List[NewsWithScores]) -> ExtractedFacts:
+    def extract_facts(self, news_list: List[NewsWithScores], search_keywords: Optional[List[str]] = None) -> ExtractedFacts:
         """뉴스들에서 핵심 정보만 추출 (문장 복사 안 함)"""
         facts = ExtractedFacts()
 
@@ -57,7 +57,7 @@ class IntelligentNewsGenerator:
         all_titles = " ".join([news.title or "" for news in news_list])
 
         # 1. 주요 엔티티 추출 (기업명, 인물명) - 제목 우선
-        facts.entities = self._extract_entities(all_text, title_text=all_titles)
+        facts.entities = self._extract_entities(all_text, title_text=all_titles, search_keywords=search_keywords)
 
         # 2. 숫자 정보 추출
         facts.numbers = self._extract_numbers(all_text)
@@ -69,21 +69,31 @@ class IntelligentNewsGenerator:
         facts.key_actions = self._extract_actions(all_text, news_list)
 
         # 5. 메인 토픽 결정
-        facts.main_topic = self._determine_main_topic(facts.entities, all_text)
+        facts.main_topic = self._determine_main_topic(facts.entities, all_text, search_keywords)
 
         return facts
 
-    def _extract_entities(self, text: str, title_text: str = "") -> List[str]:
+    def _extract_entities(self, text: str, title_text: str = "", search_keywords: Optional[List[str]] = None) -> List[str]:
         """주요 엔티티 추출 (기업명, 인물명, 지명) - 제목 우선순위 기반"""
         entities = []
         entity_scores = {}  # 엔티티별 점수
+
+        # 0. 검색 키워드 (최우선 - 사용자가 찾는 주제)
+        if search_keywords:
+            for keyword in search_keywords:
+                # 대소문자 구분 없이 검색
+                if keyword.lower() in text.lower() or keyword in text:
+                    entities.append(keyword)
+                    entity_scores[keyword] = entity_scores.get(keyword, 0) + 50  # 최고 우선순위
+                    if keyword.lower() in title_text.lower() or keyword in title_text:
+                        entity_scores[keyword] += 20
 
         # 1. 유명 브랜드/기업명 (한글) - 직접 매칭
         well_known_brands = [
             '삼성', '삼성전자', 'LG', 'SK', '현대', '현대차', '기아',
             '네이버', '카카오', '쿠팡', '배달의민족', '토스',
             '테슬라', '애플', '구글', '메타', '아마존', '마이크로소프트', '엔비디아',
-            '비트코인', '이더리움', '도지코인', '리비안', '루시드'
+            '비트코인', '이더리움', '도지코인', '리비안', '루시드', 'AI', '인공지능'
         ]
         for brand in well_known_brands:
             if brand in text:
@@ -128,7 +138,7 @@ class IntelligentNewsGenerator:
         if not result:
             general_nouns = re.findall(r'[가-힣]{2,}', text)
             noun_counts = Counter(general_nouns)
-            stopwords = {'이번', '올해', '내년', '기자', '관계자', '시장', '업계', '오늘', '어제', '도어', '손잡이'}
+            stopwords = {'이번', '올해', '내년', '기자', '관계자', '시장', '업계', '오늘', '어제', '도어', '손잡이', '조회수', '댓글', '영상'}
             result = [
                 word for word, count in noun_counts.most_common(5)
                 if word not in stopwords and count >= 2
@@ -142,38 +152,45 @@ class IntelligentNewsGenerator:
         seen_values = set()  # 숫자 값 중복 방지
 
         # 숫자 + 단위 패턴 (우선순위 순서: 큰 단위부터)
+        # 패턴: (전체 매치를 위한 그룹, 숫자 추출용 그룹)
         patterns = [
             # 시가총액/매출 등 (조 단위)
-            (r'시가?총액\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*조\s*(원|달러)', '시총', 100),
-            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*조\s*(원|달러)', '금액_조', 90),
+            (r'시가?총액\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*조(?:원|달러)', '시총', 100, 'market_cap'),
+            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*조(?:원|달러)', '금액_조', 90, 'trillion'),
 
             # 억 단위
-            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*억\s*(원|달러)', '금액_억', 80),
+            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*억(?:원|달러)', '금액_억', 80, 'hundred_million'),
 
             # 만원 단위 (주가)
-            (r'주가?\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*만\s*(원|달러)', '주가', 85),
-            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*만\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*(원|달러)', '금액_만원', 70),
+            (r'주가?\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*만\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*원', '주가', 85, 'stock_price_detailed'),
+            (r'주가?\s*(\d+(?:,\d{3})*(?:\.\d+)?)\s*만원', '주가', 85, 'stock_price'),
+            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*만원', '금액_만원', 70, 'ten_thousand'),
 
             # 비율 (%)
-            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*%', '비율', 60),
+            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*%', '비율', 60, 'percentage'),
 
             # 수량
-            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*(명|개|건|회|대)', '수량', 50),
+            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:명|개|건|회|대)', '수량', 50, 'count'),
 
             # 배수/점수
-            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*(배|점|등급)', '배수', 40),
+            (r'(\d+(?:,\d{3})*(?:\.\d+)?)\s*(?:배|점|등급)', '배수', 40, 'multiplier'),
         ]
 
         number_with_priority = []
 
-        for pattern, category, priority in patterns:
-            matches = re.findall(pattern, text)
-            for match in matches:
-                # 튜플을 문자열로 변환
-                if isinstance(match, tuple):
-                    number_str = "".join(str(m) for m in match if m).strip()
-                else:
-                    number_str = match.strip()
+        for pattern_tuple in patterns:
+            pattern = pattern_tuple[0]
+            category = pattern_tuple[1]
+            priority = pattern_tuple[2]
+
+            # finditer를 사용하여 전체 매치와 그룹을 모두 얻기
+            for match_obj in re.finditer(pattern, text):
+                # 전체 매치된 텍스트 사용 (단위 포함)
+                number_str = match_obj.group(0)
+
+                # "시가총액" 같은 접두어 제거
+                number_str = re.sub(r'^(시가?총액|주가?)\s*', '', number_str)
+                number_str = number_str.strip()
 
                 # 숫자 값 추출 (중복 체크용)
                 number_value = re.findall(r'\d+(?:,\d{3})*(?:\.\d+)?', number_str)
@@ -243,8 +260,12 @@ class IntelligentNewsGenerator:
 
         return actions[:5]
 
-    def _determine_main_topic(self, entities: List[str], text: str) -> str:
+    def _determine_main_topic(self, entities: List[str], text: str, search_keywords: Optional[List[str]] = None) -> str:
         """메인 토픽 결정"""
+        # 검색 키워드가 있으면 최우선 사용
+        if search_keywords and search_keywords[0]:
+            return search_keywords[0]
+
         if entities:
             return entities[0]
 
@@ -437,11 +458,12 @@ class IntelligentNewsGenerator:
     def generate_news(
         self,
         news_list: List[NewsWithScores],
-        sources: List[str]
+        sources: List[str],
+        search_keywords: Optional[List[str]] = None,
     ) -> Dict[str, str]:
         """전체 뉴스 생성 (표절 없는 재작성)"""
-        # 1. 팩트 추출
-        facts = self.extract_facts(news_list)
+        # 1. 팩트 추출 (검색 키워드로 주제 우선순위 지정)
+        facts = self.extract_facts(news_list, search_keywords)
 
         # 2. 제목 생성
         title = self.generate_title(facts)

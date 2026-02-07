@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스 수집 vs 생성 비교 - 삼성전자</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 1200px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            font-size: 1.5rem;
+        }
+        .news-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .news-item h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .news-item .meta {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        .news-item .body {
+            color: #555;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        .news-item .images {
+            margin-top: 15px;
+        }
+        .news-item .images img {
+            max-width: 150px;
+            max-height: 100px;
+            margin: 5px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .generated-news {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .generated-news h2 {
+            color: #764ba2;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #764ba2;
+            font-size: 1.8rem;
+        }
+        .generated-news .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .generated-news .body {
+            color: #444;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        .generated-news .images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .generated-news .images img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        .stat-item .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 뉴스 수집 vs 생성 비교</h1>
+        <p>키워드: <strong>삼성전자</strong> | 생성 시각: 2026-02-07 14:29:21</p>
+    </div>
+
+    <div class="container">
+        <!-- 통계 -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="label">수집된 뉴스</div>
+                <div class="value">5</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">생성된 뉴스 길이</div>
+                <div class="value">173자</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">생성 성공</div>
+                <div class="value">✓</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">이미지 개수</div>
+                <div class="value">3</div>
+            </div>
+        </div>
+
+        <!-- 비교 그리드 -->
+        <div class="comparison-grid">
+            <!-- 좌측: 수집된 뉴스들 -->
+            <div class="panel">
+                <h2>📰 수집된 원본 뉴스 (5개)</h2>
+
+                <div class="news-item">
+                    <h3>1. "오늘 삼성전자 11만1600원 하한가에 매수했다"…'수천만원 로또' 인증 등장 - 뉴스1</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">뉴스1</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">48 chars</span>
+                    </div>
+                    <div class="body">"오늘 삼성전자 11만1600원 하한가에 매수했다"…'수천만원 로또' 인증 등장 뉴스1</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>2. 51년만 주가 1430배 올랐다...삼성전자 '시총 1000조' 고지 - 중앙일보</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">중앙일보</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">43 chars</span>
+                    </div>
+                    <div class="body">51년만 주가 1430배 올랐다...삼성전자 '시총 1000조' 고지 중앙일보</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>3. "아니! 삼성전자 하한가에 사졌네"…'삼전 로또' 인증글 화제 - 뉴시스</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">뉴시스</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">38 chars</span>
+                    </div>
+                    <div class="body">"아니! 삼성전자 하한가에 사졌네"…'삼전 로또' 인증글 화제 뉴시스</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>4. "SK하이닉스·삼성전자만 엔비디아 루빈에 HBM4 공급"</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">fnnews.com</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">124 chars</span>
+                    </div>
+                    <div class="body">SK하이닉스와 삼성전자의 6세대 고대역폭메모리(HBM) HBM4만 엔비디아 차세대 슈퍼칩 ‘베라 루빈’에 탑재될 것이라는 전망이 나왔다. 마이크론이 HBM4 공급망에서 사실상 배제되면서 베라 루빈용 HBM 물량을 한국...</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>5. "집 앞에서 제품 점검·수리·상담"…삼성전자, '찾아가는 바로 서비스...</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">thepublic.kr</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">122 chars</span>
+                    </div>
+                    <div class="body">삼성전자가 고객의 서비스 접근성을 강화한 '찾아가는 바로 서비스'를 운영한다. '찾아가는 바로 서비스'는 삼성전자 전문 인력들이 아파트·주상복합 단지 등 고객 주거 지역 인근으로 찾아가 서비스 부스를 1~2주 가량...</div>
+                    
+                </div>
+
+            </div>
+
+            <!-- 우측: 생성된 뉴스 -->
+            <div class="panel">
+                <h2>✨ AI가 생성한 최종 뉴스</h2>
+                <div class="generated-news" style="background: #f8f9fa; padding: 25px;">
+
+                    <div class="title">삼성전자 관련 소식</div>
+                    <div class="body">삼성전자 오늘 1600 원를 기록하며.
+
+이번 발표는 1600 원의 규모, 1600 원의 규모, 4 만 엔의 규모로 나타났다. 삼성전자는 삼성전자 분야에서 꾸준한 성장을 보이고 있다. 관련 업계의 향후 움직임이 주목된다.
+
+---
+출처: thepublic.kr, 뉴스1, fnnews.com, 뉴시스, 중앙일보</div>
+                    <div class="images"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b397c53b-6f15-499e-aa8e-d011f91cca51.jpg" alt="Generated Image 1" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/07/ovp_be8e7bd6-0bee-448f-bc17-a3b396314e9c.jpg/_ir_432x244_/t15.jpg" alt="Generated Image 2" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b781b819-1f2a-4791-8a70-afcf6fae58bf.jpg" alt="Generated Image 3" onerror="this.style.display='none'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 생성된 뉴스 (하단) -->
+        <div class="generated-news">
+            <h2>📝 생성된 뉴스 전문</h2>
+            <div class="title">삼성전자 관련 소식</div>
+            <div class="body">삼성전자 오늘 1600 원를 기록하며.
+
+이번 발표는 1600 원의 규모, 1600 원의 규모, 4 만 엔의 규모로 나타났다. 삼성전자는 삼성전자 분야에서 꾸준한 성장을 보이고 있다. 관련 업계의 향후 움직임이 주목된다.
+
+---
+출처: thepublic.kr, 뉴스1, fnnews.com, 뉴시스, 중앙일보</div>
+            <div class="images"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b397c53b-6f15-499e-aa8e-d011f91cca51.jpg" alt="Generated Image 1" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/07/ovp_be8e7bd6-0bee-448f-bc17-a3b396314e9c.jpg/_ir_432x244_/t15.jpg" alt="Generated Image 2" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b781b819-1f2a-4791-8a70-afcf6fae58bf.jpg" alt="Generated Image 3" onerror="this.style.display='none'"></div>
+        </div>
+    </div>
+</body>
+</html>

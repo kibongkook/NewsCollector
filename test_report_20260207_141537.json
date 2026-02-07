@@ -1,0 +1,55 @@
+{
+  "summary": {
+    "total_tests": 1,
+    "successful_tests": 1,
+    "failed_tests": 0,
+    "avg_score": 70.0,
+    "avg_char_count": 230.0,
+    "avg_generation_time_ms": 5830.0,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 1
+    },
+    "type_distribution": {
+      "standard": 1
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "챗GPT",
+      "timestamp": "2026-02-07T14:15:17.728707",
+      "search_count": 5,
+      "search_time_ms": 918,
+      "generation_success": true,
+      "generation_time_ms": 5830,
+      "generated_char_count": 230,
+      "source_count": 5,
+      "score": 70.0,
+      "issues": [
+        "BODY_TOO_SHORT:230"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 55,
+        "body_length": 230,
+        "total_length": 273,
+        "issues": [
+          "BODY_TOO_SHORT:230"
+        ]
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

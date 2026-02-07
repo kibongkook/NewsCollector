@@ -1,0 +1,91 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 0,
+    "failed_tests": 5,
+    "avg_score": 0.0,
+    "avg_char_count": 0.0,
+    "avg_generation_time_ms": 0.0,
+    "issue_counts": {
+      "GENERATION_FAILED": 5
+    },
+    "type_distribution": {}
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "정치",
+      "timestamp": "2026-02-07T13:27:31.405627",
+      "search_count": 5,
+      "search_time_ms": 1024,
+      "generation_success": false,
+      "generation_time_ms": 1347,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 2,
+      "keyword": "중국",
+      "timestamp": "2026-02-07T13:27:47.007534",
+      "search_count": 5,
+      "search_time_ms": 1598,
+      "generation_success": false,
+      "generation_time_ms": 1480,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 3,
+      "keyword": "배터리",
+      "timestamp": "2026-02-07T13:28:02.390732",
+      "search_count": 5,
+      "search_time_ms": 1052,
+      "generation_success": false,
+      "generation_time_ms": 1311,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 4,
+      "keyword": "네이버",
+      "timestamp": "2026-02-07T13:28:17.677998",
+      "search_count": 5,
+      "search_time_ms": 902,
+      "generation_success": false,
+      "generation_time_ms": 1230,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 5,
+      "keyword": "5G",
+      "timestamp": "2026-02-07T13:28:32.455100",
+      "search_count": 5,
+      "search_time_ms": 1023,
+      "generation_success": false,
+      "generation_time_ms": 1125,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    }
+  ]
+}

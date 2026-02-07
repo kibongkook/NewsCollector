@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스 수집 vs 생성 비교 - 삼성전자</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 1200px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            font-size: 1.5rem;
+        }
+        .news-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .news-item h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .news-item .meta {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        .news-item .body {
+            color: #555;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        .news-item .images {
+            margin-top: 15px;
+        }
+        .news-item .images img {
+            max-width: 150px;
+            max-height: 100px;
+            margin: 5px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .generated-news {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .generated-news h2 {
+            color: #764ba2;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #764ba2;
+            font-size: 1.8rem;
+        }
+        .generated-news .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .generated-news .body {
+            color: #444;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        .generated-news .images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .generated-news .images img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        .stat-item .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 뉴스 수집 vs 생성 비교</h1>
+        <p>키워드: <strong>삼성전자</strong> | 생성 시각: 2026-02-07 14:40:13</p>
+    </div>
+
+    <div class="container">
+        <!-- 통계 -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="label">수집된 뉴스</div>
+                <div class="value">5</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">생성된 뉴스 길이</div>
+                <div class="value">1104자</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">생성 성공</div>
+                <div class="value">✓</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">이미지 개수</div>
+                <div class="value">3</div>
+            </div>
+        </div>
+
+        <!-- 비교 그리드 -->
+        <div class="comparison-grid">
+            <!-- 좌측: 수집된 뉴스들 -->
+            <div class="panel">
+                <h2>📰 수집된 원본 뉴스 (5개)</h2>
+
+                <div class="news-item">
+                    <h3>1. "오늘 삼성전자 11만1600원 하한가에 매수했다"…'수천만원 로또' 인증 등장 - 뉴스1</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">뉴스1</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">48 chars</span>
+                    </div>
+                    <div class="body">"오늘 삼성전자 11만1600원 하한가에 매수했다"…'수천만원 로또' 인증 등장 뉴스1</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>2. 51년만 주가 1430배 올랐다...삼성전자 '시총 1000조' 고지 - 중앙일보</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">중앙일보</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">43 chars</span>
+                    </div>
+                    <div class="body">51년만 주가 1430배 올랐다...삼성전자 '시총 1000조' 고지 중앙일보</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>3. "아니! 삼성전자 하한가에 사졌네"…'삼전 로또' 인증글 화제 - 뉴시스</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">뉴시스</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">38 chars</span>
+                    </div>
+                    <div class="body">"아니! 삼성전자 하한가에 사졌네"…'삼전 로또' 인증글 화제 뉴시스</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>4. "SK하이닉스·삼성전자만 엔비디아 루빈에 HBM4 공급"</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">fnnews.com</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">124 chars</span>
+                    </div>
+                    <div class="body">SK하이닉스와 삼성전자의 6세대 고대역폭메모리(HBM) HBM4만 엔비디아 차세대 슈퍼칩 ‘베라 루빈’에 탑재될 것이라는 전망이 나왔다. 마이크론이 HBM4 공급망에서 사실상 배제되면서 베라 루빈용 HBM 물량을 한국...</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>5. 삼성전자, AT&T와 어린이용 휴대폰 'amiGO 주니어 폰' 출시</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">autodaily.co.kr</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">145 chars</span>
+                    </div>
+                    <div class="body">삼성전자가 7일 미국 통신사 AT&T와 어린이용 휴대폰 amiGO Jr.폰과 amiGO Jr. 워치2를 출시한다고 밝혔다. amiGO Jr.폰은 삼성과 AT&T가 공동 제작했으며, 미국 현지 시판 가격은 209.99달러(30만7,700원)다. 이 휴대폰은...</div>
+                    
+                </div>
+
+            </div>
+
+            <!-- 우측: 생성된 뉴스 -->
+            <div class="panel">
+                <h2>✨ AI가 생성한 최종 뉴스</h2>
+                <div class="generated-news" style="background: #f8f9fa; padding: 25px;">
+
+                    <div class="title">삼성전자, 1600원 달성</div>
+                    <div class="body">삼성전자가 국내 기업 역사상 처음으로 시가총액 1000조원 고지를 넘어섰다. 4일 유가증권시장에서 삼성전자 주가는 전 거래일 대비 0.96% 오른 16만9000원에 거래를 마쳤다. 1975년 유가증권시장 상장 이후 50년 만에 달성한 기록으로, 한국 자본시장에서 단일 기업 시총이 1000조원을 돌파한 건 이번이 처음이다. 코스닥 지수도 0.45% 상승해 1149.43에 장을 마쳤다. 종가 기준 시총은 1001조107억원을 기록했다. 코스피 전체 시가총액 4437조3235억원 가운데 차지하는 비중이 22.56%에 달했다. 삼성전자의 시총 1000조원 돌파는 한국 자본시장 성장사를 압축적으로 보여주는 사건으로 평가된다. 2025년 6월말 기준 삼성전자 소액주주 수는 약 504만9000명에 달한다. 삼성전자는 2025년 연결기준으로 매출 333조6000억원, 영업이익 43조6000억원을 기록했다. 삼성전자는 지난해 4분기 국내 기업 최초로 분기 영업이익 20조원이란 실적 신기록을 세웠다. 해외 증시에서는 이미 시총 1000조원(약 7500억 달러)을 넘긴 기업들이 적지 않다. 엔비디아·애플·마이크로소프트 등은 AI와 플랫폼 산업을 앞세워 글로벌 증시에서 이른바 ‘1조 달러 클럽’에 이름을 올린 대표적 사례다. 한편 4일 코스피는 전장보다 1.57% 오른 5371.10에 거래를 마감해 또 다시 사상 최고치를 갈아치웠다. SK하이닉스가 0.77% 내린 90만원에 마감하며 숨을 골랐지만, 현대차가 2.54%, LG에너지솔루션이 2.94%, 삼성바이오로직스가 0.57%, SK스퀘어가 4.21% 상승하는 등 시가총액 상위 종목 상당수가 강세였다. 1975년 6월 상장당시 주가는 5905원(액면가 5000원)이었는데, 이날 종가(액면가 100원)와 비교하면 액면분할을 감안해 약 1430배 올랐다. 신중호 LS증권 리서치센터장은 “삼성전자의 시가총액 1000조원 돌파는 AI와 반도체를 중심으로 한 산업구조 변화가 기업 가치에 실질적으로 반영되기 시작했음을 보여준다”며 “과거와 달리 성장 스토리와 실적이 동시에 평가받는 국면에 들어섰다는 점에서 의미가 있다”고 말했다.
+
+---
+출처: 뉴시스, autodaily.co.kr, 뉴스1, fnnews.com, 중앙일보</div>
+                    <div class="images"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b397c53b-6f15-499e-aa8e-d011f91cca51.jpg" alt="Generated Image 1" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/07/ovp_be8e7bd6-0bee-448f-bc17-a3b396314e9c.jpg/_ir_432x244_/t15.jpg" alt="Generated Image 2" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b781b819-1f2a-4791-8a70-afcf6fae58bf.jpg" alt="Generated Image 3" onerror="this.style.display='none'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 생성된 뉴스 (하단) -->
+        <div class="generated-news">
+            <h2>📝 생성된 뉴스 전문</h2>
+            <div class="title">삼성전자, 1600원 달성</div>
+            <div class="body">삼성전자가 국내 기업 역사상 처음으로 시가총액 1000조원 고지를 넘어섰다. 4일 유가증권시장에서 삼성전자 주가는 전 거래일 대비 0.96% 오른 16만9000원에 거래를 마쳤다. 1975년 유가증권시장 상장 이후 50년 만에 달성한 기록으로, 한국 자본시장에서 단일 기업 시총이 1000조원을 돌파한 건 이번이 처음이다. 코스닥 지수도 0.45% 상승해 1149.43에 장을 마쳤다. 종가 기준 시총은 1001조107억원을 기록했다. 코스피 전체 시가총액 4437조3235억원 가운데 차지하는 비중이 22.56%에 달했다. 삼성전자의 시총 1000조원 돌파는 한국 자본시장 성장사를 압축적으로 보여주는 사건으로 평가된다. 2025년 6월말 기준 삼성전자 소액주주 수는 약 504만9000명에 달한다. 삼성전자는 2025년 연결기준으로 매출 333조6000억원, 영업이익 43조6000억원을 기록했다. 삼성전자는 지난해 4분기 국내 기업 최초로 분기 영업이익 20조원이란 실적 신기록을 세웠다. 해외 증시에서는 이미 시총 1000조원(약 7500억 달러)을 넘긴 기업들이 적지 않다. 엔비디아·애플·마이크로소프트 등은 AI와 플랫폼 산업을 앞세워 글로벌 증시에서 이른바 ‘1조 달러 클럽’에 이름을 올린 대표적 사례다. 한편 4일 코스피는 전장보다 1.57% 오른 5371.10에 거래를 마감해 또 다시 사상 최고치를 갈아치웠다. SK하이닉스가 0.77% 내린 90만원에 마감하며 숨을 골랐지만, 현대차가 2.54%, LG에너지솔루션이 2.94%, 삼성바이오로직스가 0.57%, SK스퀘어가 4.21% 상승하는 등 시가총액 상위 종목 상당수가 강세였다. 1975년 6월 상장당시 주가는 5905원(액면가 5000원)이었는데, 이날 종가(액면가 100원)와 비교하면 액면분할을 감안해 약 1430배 올랐다. 신중호 LS증권 리서치센터장은 “삼성전자의 시가총액 1000조원 돌파는 AI와 반도체를 중심으로 한 산업구조 변화가 기업 가치에 실질적으로 반영되기 시작했음을 보여준다”며 “과거와 달리 성장 스토리와 실적이 동시에 평가받는 국면에 들어섰다는 점에서 의미가 있다”고 말했다.
+
+---
+출처: 뉴시스, autodaily.co.kr, 뉴스1, fnnews.com, 중앙일보</div>
+            <div class="images"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b397c53b-6f15-499e-aa8e-d011f91cca51.jpg" alt="Generated Image 1" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/07/ovp_be8e7bd6-0bee-448f-bc17-a3b396314e9c.jpg/_ir_432x244_/t15.jpg" alt="Generated Image 2" onerror="this.style.display='none'"><img src="https://pds.joongang.co.kr/news/component/htmlphoto_mmdata/202602/04/b781b819-1f2a-4791-8a70-afcf6fae58bf.jpg" alt="Generated Image 3" onerror="this.style.display='none'"></div>
+        </div>
+    </div>
+</body>
+</html>

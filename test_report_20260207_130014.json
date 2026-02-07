@@ -1,0 +1,1035 @@
+{
+  "summary": {
+    "total_tests": 30,
+    "successful_tests": 30,
+    "failed_tests": 0,
+    "avg_score": 93.5,
+    "avg_char_count": 689.8666666666667,
+    "avg_generation_time_ms": 6103.533333333334,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 4,
+      "BODY_TOO_LONG": 2
+    },
+    "type_distribution": {
+      "standard": 17,
+      "visual": 6,
+      "data": 7
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "5G",
+      "timestamp": "2026-02-07T12:51:23.955341",
+      "search_count": 5,
+      "search_time_ms": 959,
+      "generation_success": true,
+      "generation_time_ms": 4776,
+      "generated_char_count": 682,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 39,
+        "summary_length": 181,
+        "body_length": 682,
+        "total_length": 721,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "축구",
+      "timestamp": "2026-02-07T12:51:43.555666",
+      "search_count": 5,
+      "search_time_ms": 1234,
+      "generation_success": true,
+      "generation_time_ms": 4251,
+      "generated_char_count": 788,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 39,
+        "summary_length": 614,
+        "body_length": 788,
+        "total_length": 827,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "전기차",
+      "timestamp": "2026-02-07T12:52:01.911332",
+      "search_count": 5,
+      "search_time_ms": 1050,
+      "generation_success": true,
+      "generation_time_ms": 5238,
+      "generated_char_count": 565,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 36,
+        "summary_length": 521,
+        "body_length": 565,
+        "total_length": 601,
+        "issues": []
+      },
+      "images": {
+        "total_count": 4,
+        "valid_count": 4,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "금리",
+      "timestamp": "2026-02-07T12:52:21.239539",
+      "search_count": 5,
+      "search_time_ms": 1086,
+      "generation_success": true,
+      "generation_time_ms": 5004,
+      "generated_char_count": 297,
+      "source_count": 5,
+      "score": 70.0,
+      "issues": [
+        "BODY_TOO_SHORT:297"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 37,
+        "summary_length": 246,
+        "body_length": 297,
+        "total_length": 334,
+        "issues": [
+          "BODY_TOO_SHORT:297"
+        ]
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "손흥민",
+      "timestamp": "2026-02-07T12:52:42.415307",
+      "search_count": 5,
+      "search_time_ms": 970,
+      "generation_success": true,
+      "generation_time_ms": 4775,
+      "generated_char_count": 563,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 44,
+        "summary_length": 109,
+        "body_length": 563,
+        "total_length": 607,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 6,
+      "keyword": "삼성전자",
+      "timestamp": "2026-02-07T12:52:59.472591",
+      "search_count": 5,
+      "search_time_ms": 976,
+      "generation_success": true,
+      "generation_time_ms": 4791,
+      "generated_char_count": 1117,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 725,
+        "body_length": 1117,
+        "total_length": 1165,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 7,
+      "keyword": "엔비디아",
+      "timestamp": "2026-02-07T12:53:17.497543",
+      "search_count": 5,
+      "search_time_ms": 1045,
+      "generation_success": true,
+      "generation_time_ms": 1187,
+      "generated_char_count": 872,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 28,
+        "summary_length": 674,
+        "body_length": 872,
+        "total_length": 900,
+        "issues": []
+      },
+      "images": {
+        "total_count": 1,
+        "valid_count": 1,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 8,
+      "keyword": "중국",
+      "timestamp": "2026-02-07T12:53:28.526815",
+      "search_count": 5,
+      "search_time_ms": 1075,
+      "generation_success": true,
+      "generation_time_ms": 8585,
+      "generated_char_count": 465,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 431,
+        "body_length": 465,
+        "total_length": 513,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 9,
+      "keyword": "드라마",
+      "timestamp": "2026-02-07T12:53:50.484681",
+      "search_count": 5,
+      "search_time_ms": 916,
+      "generation_success": true,
+      "generation_time_ms": 8989,
+      "generated_char_count": 1207,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 38,
+        "summary_length": 179,
+        "body_length": 1207,
+        "total_length": 1245,
+        "issues": []
+      },
+      "images": {
+        "total_count": 8,
+        "valid_count": 8,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 10,
+      "keyword": "미국",
+      "timestamp": "2026-02-07T12:54:12.403901",
+      "search_count": 5,
+      "search_time_ms": 1480,
+      "generation_success": true,
+      "generation_time_ms": 6653,
+      "generated_char_count": 990,
+      "source_count": 5,
+      "score": 90.0,
+      "issues": [
+        "BODY_TOO_LONG:990"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 41,
+        "summary_length": 591,
+        "body_length": 990,
+        "total_length": 1031,
+        "issues": [
+          "BODY_TOO_LONG:990"
+        ]
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 11,
+      "keyword": "블록체인",
+      "timestamp": "2026-02-07T12:54:31.712689",
+      "search_count": 5,
+      "search_time_ms": 894,
+      "generation_success": true,
+      "generation_time_ms": 2910,
+      "generated_char_count": 976,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [
+        "BODY_TOO_LONG:976"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 47,
+        "summary_length": 678,
+        "body_length": 976,
+        "total_length": 1023,
+        "issues": [
+          "BODY_TOO_LONG:976"
+        ]
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 12,
+      "keyword": "K팝",
+      "timestamp": "2026-02-07T12:54:48.396194",
+      "search_count": 5,
+      "search_time_ms": 992,
+      "generation_success": true,
+      "generation_time_ms": 9322,
+      "generated_char_count": 615,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 46,
+        "summary_length": 500,
+        "body_length": 615,
+        "total_length": 661,
+        "issues": []
+      },
+      "images": {
+        "total_count": 8,
+        "valid_count": 8,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 13,
+      "keyword": "영화",
+      "timestamp": "2026-02-07T12:55:10.213639",
+      "search_count": 5,
+      "search_time_ms": 1162,
+      "generation_success": true,
+      "generation_time_ms": 6582,
+      "generated_char_count": 512,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 41,
+        "summary_length": 470,
+        "body_length": 512,
+        "total_length": 553,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 14,
+      "keyword": "여행",
+      "timestamp": "2026-02-07T12:55:29.924578",
+      "search_count": 5,
+      "search_time_ms": 915,
+      "generation_success": true,
+      "generation_time_ms": 7109,
+      "generated_char_count": 1011,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 101,
+        "body_length": 1011,
+        "total_length": 1059,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 15,
+      "keyword": "교육",
+      "timestamp": "2026-02-07T12:55:50.701355",
+      "search_count": 5,
+      "search_time_ms": 989,
+      "generation_success": true,
+      "generation_time_ms": 8797,
+      "generated_char_count": 374,
+      "source_count": 5,
+      "score": 80.0,
+      "issues": [
+        "BODY_TOO_SHORT:374"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 32,
+        "summary_length": 316,
+        "body_length": 374,
+        "total_length": 406,
+        "issues": [
+          "BODY_TOO_SHORT:374"
+        ]
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 16,
+      "keyword": "클라우드",
+      "timestamp": "2026-02-07T12:56:11.580147",
+      "search_count": 5,
+      "search_time_ms": 889,
+      "generation_success": true,
+      "generation_time_ms": 6219,
+      "generated_char_count": 1028,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 40,
+        "summary_length": 865,
+        "body_length": 1028,
+        "total_length": 1068,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 17,
+      "keyword": "환율",
+      "timestamp": "2026-02-07T12:56:32.256297",
+      "search_count": 5,
+      "search_time_ms": 837,
+      "generation_success": true,
+      "generation_time_ms": 7609,
+      "generated_char_count": 550,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 50,
+        "summary_length": 33,
+        "body_length": 550,
+        "total_length": 600,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 18,
+      "keyword": "여행",
+      "timestamp": "2026-02-07T12:56:52.165419",
+      "search_count": 5,
+      "search_time_ms": 1444,
+      "generation_success": true,
+      "generation_time_ms": 6703,
+      "generated_char_count": 1011,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 48,
+        "summary_length": 101,
+        "body_length": 1011,
+        "total_length": 1059,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 19,
+      "keyword": "전기차",
+      "timestamp": "2026-02-07T12:57:00.846810",
+      "search_count": 5,
+      "search_time_ms": 1481,
+      "generation_success": true,
+      "generation_time_ms": 4986,
+      "generated_char_count": 625,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 36,
+        "summary_length": 582,
+        "body_length": 625,
+        "total_length": 661,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 20,
+      "keyword": "코스피",
+      "timestamp": "2026-02-07T12:57:15.106386",
+      "search_count": 5,
+      "search_time_ms": 1246,
+      "generation_success": true,
+      "generation_time_ms": 10583,
+      "generated_char_count": 713,
+      "source_count": 5,
+      "score": 90.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 40,
+        "summary_length": 501,
+        "body_length": 713,
+        "total_length": 753,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 21,
+      "keyword": "영화",
+      "timestamp": "2026-02-07T12:57:36.092021",
+      "search_count": 5,
+      "search_time_ms": 1409,
+      "generation_success": true,
+      "generation_time_ms": 6484,
+      "generated_char_count": 512,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 41,
+        "summary_length": 470,
+        "body_length": 512,
+        "total_length": 553,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 22,
+      "keyword": "영화",
+      "timestamp": "2026-02-07T12:57:47.780631",
+      "search_count": 5,
+      "search_time_ms": 450,
+      "generation_success": true,
+      "generation_time_ms": 6003,
+      "generated_char_count": 512,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 41,
+        "summary_length": 470,
+        "body_length": 512,
+        "total_length": 553,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 23,
+      "keyword": "축구",
+      "timestamp": "2026-02-07T12:57:57.672942",
+      "search_count": 5,
+      "search_time_ms": 1245,
+      "generation_success": true,
+      "generation_time_ms": 3858,
+      "generated_char_count": 788,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 39,
+        "summary_length": 614,
+        "body_length": 788,
+        "total_length": 827,
+        "issues": []
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 24,
+      "keyword": "챗GPT",
+      "timestamp": "2026-02-07T12:58:09.770443",
+      "search_count": 5,
+      "search_time_ms": 1320,
+      "generation_success": true,
+      "generation_time_ms": 6148,
+      "generated_char_count": 230,
+      "source_count": 5,
+      "score": 70.0,
+      "issues": [
+        "BODY_TOO_SHORT:230"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 55,
+        "body_length": 230,
+        "total_length": 273,
+        "issues": [
+          "BODY_TOO_SHORT:230"
+        ]
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 25,
+      "keyword": "북한",
+      "timestamp": "2026-02-07T12:58:30.715633",
+      "search_count": 5,
+      "search_time_ms": 1121,
+      "generation_success": true,
+      "generation_time_ms": 4284,
+      "generated_char_count": 253,
+      "source_count": 5,
+      "score": 75.0,
+      "issues": [
+        "BODY_TOO_SHORT:253"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 23,
+        "summary_length": 79,
+        "body_length": 253,
+        "total_length": 276,
+        "issues": [
+          "BODY_TOO_SHORT:253"
+        ]
+      },
+      "images": {
+        "total_count": 4,
+        "valid_count": 4,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 26,
+      "keyword": "AI",
+      "timestamp": "2026-02-07T12:58:50.019098",
+      "search_count": 5,
+      "search_time_ms": 1361,
+      "generation_success": true,
+      "generation_time_ms": 9962,
+      "generated_char_count": 674,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 29,
+        "summary_length": 393,
+        "body_length": 674,
+        "total_length": 703,
+        "issues": []
+      },
+      "images": {
+        "total_count": 8,
+        "valid_count": 8,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 27,
+      "keyword": "날씨",
+      "timestamp": "2026-02-07T12:59:14.572106",
+      "search_count": 5,
+      "search_time_ms": 877,
+      "generation_success": true,
+      "generation_time_ms": 4497,
+      "generated_char_count": 621,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 38,
+        "summary_length": 598,
+        "body_length": 621,
+        "total_length": 659,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 28,
+      "keyword": "대통령",
+      "timestamp": "2026-02-07T12:59:28.936767",
+      "search_count": 5,
+      "search_time_ms": 1518,
+      "generation_success": true,
+      "generation_time_ms": 2702,
+      "generated_char_count": 776,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 39,
+        "summary_length": 610,
+        "body_length": 776,
+        "total_length": 815,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 29,
+      "keyword": "국회",
+      "timestamp": "2026-02-07T12:59:45.135426",
+      "search_count": 5,
+      "search_time_ms": 1179,
+      "generation_success": true,
+      "generation_time_ms": 4619,
+      "generated_char_count": 754,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 688,
+        "body_length": 754,
+        "total_length": 797,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 30,
+      "keyword": "K팝",
+      "timestamp": "2026-02-07T13:00:03.629755",
+      "search_count": 5,
+      "search_time_ms": 1065,
+      "generation_success": true,
+      "generation_time_ms": 9480,
+      "generated_char_count": 615,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 46,
+        "summary_length": 500,
+        "body_length": 615,
+        "total_length": 661,
+        "issues": []
+      },
+      "images": {
+        "total_count": 8,
+        "valid_count": 8,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

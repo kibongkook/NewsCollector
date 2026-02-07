@@ -1,0 +1,192 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 94.0,
+    "avg_char_count": 637.6,
+    "avg_generation_time_ms": 6265.6,
+    "issue_counts": {
+      "BODY_TOO_LONG": 2
+    },
+    "type_distribution": {
+      "visual": 1,
+      "standard": 4
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "환율",
+      "timestamp": "2026-02-07T13:46:26.941639",
+      "search_count": 5,
+      "search_time_ms": 1095,
+      "generation_success": true,
+      "generation_time_ms": 9327,
+      "generated_char_count": 561,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 50,
+        "summary_length": 305,
+        "body_length": 561,
+        "total_length": 611,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "축구",
+      "timestamp": "2026-02-07T13:46:49.809894",
+      "search_count": 5,
+      "search_time_ms": 1149,
+      "generation_success": true,
+      "generation_time_ms": 3800,
+      "generated_char_count": 861,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [
+        "BODY_TOO_LONG:861"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 683,
+        "body_length": 861,
+        "total_length": 904,
+        "issues": [
+          "BODY_TOO_LONG:861"
+        ]
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "카카오",
+      "timestamp": "2026-02-07T13:47:08.212025",
+      "search_count": 5,
+      "search_time_ms": 1375,
+      "generation_success": true,
+      "generation_time_ms": 7464,
+      "generated_char_count": 485,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 148,
+        "body_length": 485,
+        "total_length": 528,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "네이버",
+      "timestamp": "2026-02-07T13:47:32.116625",
+      "search_count": 5,
+      "search_time_ms": 1008,
+      "generation_success": true,
+      "generation_time_ms": 5607,
+      "generated_char_count": 421,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 43,
+        "summary_length": 148,
+        "body_length": 421,
+        "total_length": 464,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "블록체인",
+      "timestamp": "2026-02-07T13:47:47.122113",
+      "search_count": 5,
+      "search_time_ms": 899,
+      "generation_success": true,
+      "generation_time_ms": 5130,
+      "generated_char_count": 860,
+      "source_count": 5,
+      "score": 90.0,
+      "issues": [
+        "BODY_TOO_LONG:860"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 47,
+        "summary_length": 563,
+        "body_length": 860,
+        "total_length": 907,
+        "issues": [
+          "BODY_TOO_LONG:860"
+        ]
+      },
+      "images": {
+        "total_count": 4,
+        "valid_count": 4,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

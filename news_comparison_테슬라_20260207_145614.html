@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>뉴스 수집 vs 생성 비교 - 테슬라</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .header h1 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+        .header p {
+            opacity: 0.9;
+        }
+        .container {
+            max-width: 1600px;
+            margin: 30px auto;
+            padding: 0 20px;
+        }
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+        @media (max-width: 1200px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .panel h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #667eea;
+            font-size: 1.5rem;
+        }
+        .news-item {
+            background: #f8f9fa;
+            padding: 20px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+        }
+        .news-item h3 {
+            color: #333;
+            font-size: 1.1rem;
+            margin-bottom: 10px;
+        }
+        .news-item .meta {
+            color: #666;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+        .news-item .body {
+            color: #555;
+            line-height: 1.8;
+            white-space: pre-wrap;
+        }
+        .news-item .images {
+            margin-top: 15px;
+        }
+        .news-item .images img {
+            max-width: 150px;
+            max-height: 100px;
+            margin: 5px;
+            border-radius: 5px;
+            object-fit: cover;
+        }
+        .generated-news {
+            background: white;
+            border-radius: 10px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .generated-news h2 {
+            color: #764ba2;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #764ba2;
+            font-size: 1.8rem;
+        }
+        .generated-news .title {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+        }
+        .generated-news .body {
+            color: #444;
+            line-height: 1.9;
+            font-size: 1.05rem;
+            white-space: pre-wrap;
+            margin-bottom: 20px;
+        }
+        .generated-news .images {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .generated-news .images img {
+            width: 100%;
+            height: 150px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        .stat-item {
+            text-align: center;
+        }
+        .stat-item .label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 5px;
+        }
+        .stat-item .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+        }
+        .badge {
+            display: inline-block;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin: 5px 5px 5px 0;
+        }
+        .badge-success {
+            background: #d4edda;
+            color: #155724;
+        }
+        .badge-info {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        .badge-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🔍 뉴스 수집 vs 생성 비교</h1>
+        <p>키워드: <strong>테슬라</strong> | 생성 시각: 2026-02-07 14:56:14</p>
+    </div>
+
+    <div class="container">
+        <!-- 통계 -->
+        <div class="stats">
+            <div class="stat-item">
+                <div class="label">수집된 뉴스</div>
+                <div class="value">5</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">생성된 뉴스 길이</div>
+                <div class="value">19자</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">생성 성공</div>
+                <div class="value">✓</div>
+            </div>
+            <div class="stat-item">
+                <div class="label">이미지 개수</div>
+                <div class="value">3</div>
+            </div>
+        </div>
+
+        <!-- 비교 그리드 -->
+        <div class="comparison-grid">
+            <!-- 좌측: 수집된 뉴스들 -->
+            <div class="panel">
+                <h2>📰 수집된 원본 뉴스 (5개)</h2>
+
+                <div class="news-item">
+                    <h3>1. "테슬라 손잡이 보기엔 좋지만 불 나면 갇힌다"…악재 터지나 [이슈+]</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">한국경제</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">132 chars</span>
+                    </div>
+                    <div class="body">지난해 12월 23일(현지시간) 미국 도로교통안전국(NHTSA) 산하 결함조사국(ODI)은 테슬라의 도어 손잡이에 대해... 사망사고 늘어나는 테슬라식 손잡이에 中 첫 규제 7일 업계에 따르면 테슬라식 '매립형 도어 손잡이'에 대한...</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>2. 테슬라 3.5%-리비안 8%-루시드 14%, 전기차 일제 급등(종합) - 뉴스1</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">뉴스1</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">42 chars</span>
+                    </div>
+                    <div class="body">테슬라 3.5%-리비안 8%-루시드 14%, 전기차 일제 급등(종합) 뉴스1</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>3. 기술주 랠리에 테슬라도 3.50% 급등 - 뉴스1</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">뉴스1</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">25 chars</span>
+                    </div>
+                    <div class="body">기술주 랠리에 테슬라도 3.50% 급등 뉴스1</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>4. “테슬라 불났는데 문 안 열려” 10년간 최소 15명 사망했다 - 조선일보</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">조선일보</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">39 chars</span>
+                    </div>
+                    <div class="body">“테슬라 불났는데 문 안 열려” 10년간 최소 15명 사망했다 조선일보</div>
+                    
+                </div>
+
+                <div class="news-item">
+                    <h3>5. 테슬라 주가, 411.11달러 3.50% 상승 마감</h3>
+                    <div class="meta">
+                        <span class="badge badge-info">joongangenews.com</span>
+                        <span class="badge badge-success">0 images</span>
+                        <span class="badge badge-warning">123 chars</span>
+                    </div>
+                    <div class="body">|중앙이코노미뉴스 김영진 기자| 7일(미국 동부 기준 6일) 기준, 네이버페이 증권에 따르면 테슬라 주가는 411.11달러에 마감하며 지난 종가 대비 13.90달러 상승, 3.50%의 상승률을 기록했다. 출처=테슬라...</div>
+                    
+                </div>
+
+            </div>
+
+            <!-- 우측: 생성된 뉴스 -->
+            <div class="panel">
+                <h2>✨ AI가 생성한 최종 뉴스</h2>
+                <div class="generated-news" style="background: #f8f9fa; padding: 25px;">
+
+                    <div class="title">[속보] 테슬라 최신 동향</div>
+                    <div class="body">테슬라 관련 최신 동향이 전해졌다.</div>
+                    <div class="images"><img src="https://img.hankyung.com/photo/202602/AD.43120419.1.jpg" alt="Generated Image 1" onerror="this.style.display='none'"><img src="https://img.hankyung.com/photo/202602/01.42552461.1.jpg" alt="Generated Image 2" onerror="this.style.display='none'"><img src="https://cdn.joongangenews.com/news/photo/202602/493878_296574_2716.png" alt="Generated Image 3" onerror="this.style.display='none'"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 전체 생성된 뉴스 (하단) -->
+        <div class="generated-news">
+            <h2>📝 생성된 뉴스 전문</h2>
+            <div class="title">[속보] 테슬라 최신 동향</div>
+            <div class="body">테슬라 관련 최신 동향이 전해졌다.</div>
+            <div class="images"><img src="https://img.hankyung.com/photo/202602/AD.43120419.1.jpg" alt="Generated Image 1" onerror="this.style.display='none'"><img src="https://img.hankyung.com/photo/202602/01.42552461.1.jpg" alt="Generated Image 2" onerror="this.style.display='none'"><img src="https://cdn.joongangenews.com/news/photo/202602/493878_296574_2716.png" alt="Generated Image 3" onerror="this.style.display='none'"></div>
+        </div>
+    </div>
+</body>
+</html>

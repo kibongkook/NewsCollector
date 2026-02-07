@@ -12,7 +12,9 @@
       "Read(//d/**)",
       "Bash(pip install:*)",
       "Bash(git -C \"d:\\\\Claude\\\\NewsCollector\" add -A)",
-      "Bash(git -C \"d:\\\\Claude\\\\NewsCollector\" status)"
+      "Bash(git -C \"d:\\\\Claude\\\\NewsCollector\" status)",
+      "Bash(start news_output.html)",
+      "Bash(ls:*)"
     ]
   }
 }

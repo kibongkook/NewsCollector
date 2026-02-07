@@ -1,0 +1,198 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 85.0,
+    "avg_char_count": 685.6,
+    "avg_generation_time_ms": 4573.8,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 2,
+      "TOO_MANY_IMAGES_FOR_STANDARD": 2
+    },
+    "type_distribution": {
+      "standard": 2,
+      "data": 1,
+      "visual": 2
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "여행",
+      "timestamp": "2026-02-07T12:15:47.320759",
+      "search_count": 5,
+      "search_time_ms": 960,
+      "generation_success": true,
+      "generation_time_ms": 4930,
+      "generated_char_count": 281,
+      "source_count": 5,
+      "score": 70.0,
+      "issues": [
+        "BODY_TOO_SHORT:281",
+        "TOO_MANY_IMAGES_FOR_STANDARD:2"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 30,
+        "summary_length": 224,
+        "body_length": 281,
+        "total_length": 311,
+        "issues": [
+          "BODY_TOO_SHORT:281",
+          "TOO_MANY_IMAGES_FOR_STANDARD:2"
+        ]
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "엔비디아",
+      "timestamp": "2026-02-07T12:16:06.443249",
+      "search_count": 5,
+      "search_time_ms": 930,
+      "generation_success": true,
+      "generation_time_ms": 1112,
+      "generated_char_count": 872,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 28,
+        "summary_length": 674,
+        "body_length": 872,
+        "total_length": 900,
+        "issues": []
+      },
+      "images": {
+        "total_count": 1,
+        "valid_count": 1,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "축구",
+      "timestamp": "2026-02-07T12:16:17.900732",
+      "search_count": 5,
+      "search_time_ms": 985,
+      "generation_success": true,
+      "generation_time_ms": 5108,
+      "generated_char_count": 966,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 39,
+        "summary_length": 804,
+        "body_length": 966,
+        "total_length": 1005,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "여행",
+      "timestamp": "2026-02-07T12:16:37.407379",
+      "search_count": 5,
+      "search_time_ms": 419,
+      "generation_success": true,
+      "generation_time_ms": 5288,
+      "generated_char_count": 281,
+      "source_count": 5,
+      "score": 65.0,
+      "issues": [
+        "BODY_TOO_SHORT:281",
+        "TOO_MANY_IMAGES_FOR_STANDARD:2"
+      ],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 30,
+        "summary_length": 224,
+        "body_length": 281,
+        "total_length": 311,
+        "issues": [
+          "BODY_TOO_SHORT:281",
+          "TOO_MANY_IMAGES_FOR_STANDARD:2"
+        ]
+      },
+      "images": {
+        "total_count": 2,
+        "valid_count": 2,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "클라우드",
+      "timestamp": "2026-02-07T12:16:43.649419",
+      "search_count": 5,
+      "search_time_ms": 1529,
+      "generation_success": true,
+      "generation_time_ms": 6431,
+      "generated_char_count": 1028,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 40,
+        "summary_length": 865,
+        "body_length": 1028,
+        "total_length": 1068,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}

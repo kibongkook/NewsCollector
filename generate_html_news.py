@@ -131,6 +131,93 @@ def esc(text: str) -> str:
     return html_lib.escape(text or "")
 
 
+def insert_images_dynamically(
+    body_text: str,
+    images: List[str],
+    news_type: str
+) -> str:
+    """이미지 우선 배치: 이미지 개수 기반 (텍스트 길이 무관)
+
+    핵심 변경:
+    1. 텍스트 길이 제약 제거 → 이미지 개수 기반
+    2. 이미지 많으면 본문에 더 많이 크게 배치
+    3. 첫 단락 후 무조건 이미지 배치 (있으면)
+
+    배치 전략:
+    - 5개 이상: 본문에 4개, 나머지 갤러리
+    - 3-4개: 본문에 3개, 나머지 갤러리
+    - 1-2개: 전부 본문에 배치
+
+    Args:
+        body_text: 본문 텍스트 (단락 구분자: \n\n)
+        images: 이미지 URL 리스트
+        news_type: 뉴스 유형
+
+    Returns:
+        이미지가 삽입된 HTML
+    """
+    if not images:
+        # 이미지 없으면 본문만
+        result = ""
+        for p in body_text.split("\n\n"):
+            p = p.strip()
+            if p and not p.startswith("---") and not p.startswith("출처:"):
+                result += f"<p>{esc(p)}</p>\n"
+        return result
+
+    paragraphs = [
+        p.strip() for p in body_text.split("\n\n")
+        if p.strip() and not p.startswith("---") and not p.startswith("출처:")
+    ]
+
+    if not paragraphs:
+        return ""
+
+    result = ""
+    img_idx = 0
+
+    # ★ 이미지 개수에 따라 본문에 배치할 개수 결정
+    num_images = len(images)
+    if num_images >= 5:
+        max_inline = 4  # 5개 이상: 최대 4개 본문 배치
+    elif num_images >= 3:
+        max_inline = 3  # 3-4개: 최대 3개
+    else:
+        max_inline = num_images  # 1-2개: 전부 배치
+
+    # 첫 단락 출력
+    result += f"<p>{esc(paragraphs[0])}</p>\n"
+
+    # ★ 첫 단락 후 무조건 이미지 1개 배치 (있으면)
+    if img_idx < len(images) and img_idx < max_inline:
+        result += f'<div class="gen-inline-image"><img src="{esc(images[img_idx])}" alt="" onerror="this.parentElement.style.display=\'none\'"></div>\n'
+        img_idx += 1
+
+    # 나머지 단락 처리 (2-3 단락마다 이미지 삽입)
+    para_count = 0
+    for para in paragraphs[1:]:
+        para_count += 1
+
+        # ★ 2-3 단락마다 이미지 삽입 (max_inline까지)
+        if para_count >= 2 and img_idx < len(images) and img_idx < max_inline:
+            result += f'<div class="gen-inline-image"><img src="{esc(images[img_idx])}" alt="" onerror="this.parentElement.style.display=\'none\'"></div>\n'
+            img_idx += 1
+            para_count = 0  # 리셋
+
+        result += f"<p>{esc(para)}</p>\n"
+
+    # 남은 이미지가 있으면 하단에 갤러리로 추가
+    remaining_images = images[img_idx:]
+    if remaining_images:
+        gallery_imgs = "".join(
+            f'<img src="{esc(img)}" alt="" onerror="this.parentElement.removeChild(this)">'
+            for img in remaining_images[:6]  # 최대 6장
+        )
+        result += f'<div class="gen-images"><div class="gen-images-title">추가 이미지 ({len(remaining_images)}장)</div><div class="gen-images-grid">{gallery_imgs}</div></div>\n'
+
+    return result
+
+
 def build_html(articles: List[Dict[str, Any]]) -> str:
     """원본 vs 생성 비교 HTML"""
     now = datetime.now().strftime("%Y년 %m월 %d일 %H:%M")
@@ -172,31 +259,19 @@ def build_html(articles: List[Dict[str, Any]]) -> str:
 
         # 유형별 이미지 배치
         primary_image_html = ""
-        gallery_html = ""
-        inline_image_html = ""
+        gen_body_with_images = ""
 
         if news_type == "visual" and images:
-            # 비주얼형: 대표 이미지 본문 위, 갤러리 본문 아래
+            # 비주얼형: 대표 이미지 본문 위, 나머지는 동적 삽입
             primary_image_html = f'<div class="gen-primary-image"><img src="{esc(images[0])}" alt="" onerror="this.parentElement.style.display=\'none\'"></div>'
-            if len(images) > 1:
-                gallery_imgs = "".join(
-                    f'<img src="{esc(img)}" alt="" onerror="this.parentElement.removeChild(this)">'
-                    for img in images[1:7]
-                )
-                gallery_html = f'<div class="gen-images"><div class="gen-images-title">갤러리 ({len(images) - 1}장)</div><div class="gen-images-grid">{gallery_imgs}</div></div>'
-        elif news_type == "standard" and images:
-            # 일반형: 본문 뒤 보조 이미지 1장
-            inline_image_html = f'<div class="gen-inline-image"><img src="{esc(images[0])}" alt="" onerror="this.parentElement.style.display=\'none\'"></div>'
+            gen_body_with_images = insert_images_dynamically(art["body"], images[1:], news_type)
         elif news_type == "data" and images:
-            # 데이터형: 차트/그래프 이미지 본문 위
+            # 데이터형: 차트/그래프 이미지 본문 위, 나머지는 동적 삽입
             primary_image_html = f'<div class="gen-primary-image gen-chart-image"><img src="{esc(images[0])}" alt="" onerror="this.parentElement.style.display=\'none\'"></div>'
-
-        gen_body = ""
-        for p in art["body"].split("\n\n"):
-            p = p.strip()
-            # 출처 라인은 본문에서 제외 (footer에서 별도 표시)
-            if p and not p.startswith("---") and not p.startswith("출처:"):
-                gen_body += f"<p>{esc(p)}</p>\n"
+            gen_body_with_images = insert_images_dynamically(art["body"], images[1:], news_type)
+        else:
+            # 일반형: 모든 이미지 동적 삽입 (300-400자마다)
+            gen_body_with_images = insert_images_dynamically(art["body"], images, news_type)
 
         # 뉴스 유형 배지
         type_labels = {"standard": "일반", "visual": "비주얼", "data": "데이터"}
@@ -238,10 +313,8 @@ def build_html(articles: List[Dict[str, Any]]) -> str:
                         <h3>{esc(art['title'])}</h3>
                         {primary_image_html}
                         <div class="gen-body">
-                            {gen_body}
+                            {gen_body_with_images}
                         </div>
-                        {inline_image_html}
-                        {gallery_html}
                         <div class="gen-footer">
                             출처: {sources_html}
                         </div>

@@ -1,0 +1,166 @@
+{
+  "summary": {
+    "total_tests": 10,
+    "successful_tests": 0,
+    "failed_tests": 10,
+    "avg_score": 0.0,
+    "avg_char_count": 0.0,
+    "avg_generation_time_ms": 0.0,
+    "issue_counts": {
+      "GENERATION_FAILED": 10
+    },
+    "type_distribution": {}
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "드라마",
+      "timestamp": "2026-02-07T13:34:05.984333",
+      "search_count": 5,
+      "search_time_ms": 1094,
+      "generation_success": false,
+      "generation_time_ms": 513,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 2,
+      "keyword": "취업",
+      "timestamp": "2026-02-07T13:34:20.759916",
+      "search_count": 5,
+      "search_time_ms": 993,
+      "generation_success": false,
+      "generation_time_ms": 415,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 3,
+      "keyword": "네이버",
+      "timestamp": "2026-02-07T13:34:34.914154",
+      "search_count": 5,
+      "search_time_ms": 989,
+      "generation_success": false,
+      "generation_time_ms": 402,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 4,
+      "keyword": "외교",
+      "timestamp": "2026-02-07T13:34:49.640618",
+      "search_count": 5,
+      "search_time_ms": 943,
+      "generation_success": false,
+      "generation_time_ms": 366,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 5,
+      "keyword": "AI",
+      "timestamp": "2026-02-07T13:35:04.424190",
+      "search_count": 5,
+      "search_time_ms": 1044,
+      "generation_success": false,
+      "generation_time_ms": 664,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 6,
+      "keyword": "아이돌",
+      "timestamp": "2026-02-07T13:35:15.743182",
+      "search_count": 5,
+      "search_time_ms": 951,
+      "generation_success": false,
+      "generation_time_ms": 407,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 7,
+      "keyword": "엔비디아",
+      "timestamp": "2026-02-07T13:35:28.978595",
+      "search_count": 5,
+      "search_time_ms": 921,
+      "generation_success": false,
+      "generation_time_ms": 377,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 8,
+      "keyword": "인공지능",
+      "timestamp": "2026-02-07T13:35:40.071397",
+      "search_count": 5,
+      "search_time_ms": 945,
+      "generation_success": false,
+      "generation_time_ms": 491,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 9,
+      "keyword": "K팝",
+      "timestamp": "2026-02-07T13:35:53.683841",
+      "search_count": 5,
+      "search_time_ms": 1049,
+      "generation_success": false,
+      "generation_time_ms": 548,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    },
+    {
+      "test_id": 10,
+      "keyword": "애플",
+      "timestamp": "2026-02-07T13:36:08.106719",
+      "search_count": 5,
+      "search_time_ms": 911,
+      "generation_success": false,
+      "generation_time_ms": 366,
+      "generated_char_count": 0,
+      "source_count": 0,
+      "score": 0.0,
+      "issues": [
+        "GENERATION_FAILED"
+      ]
+    }
+  ]
+}

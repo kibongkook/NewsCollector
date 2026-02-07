@@ -140,26 +140,26 @@ class FallbackGenerator:
 
         # 포맷별 렌더링
         if format == NewsFormat.BRIEF:
-            text = self._render_brief(assembled, source_news[0])
+            text = self._render_brief(assembled, source_news[0], search_keywords)
 
         elif format == NewsFormat.SOCIAL_POST:
-            text = self._render_social_post(assembled, source_news[0])
+            text = self._render_social_post(assembled, source_news[0], search_keywords)
 
         elif format == NewsFormat.CARD_NEWS:
-            text = self._render_card_news(assembled, source_news[0], sources_str)
+            text = self._render_card_news(assembled, source_news[0], sources_str, search_keywords)
 
         elif format == NewsFormat.ANALYSIS:
-            text = self._render_analysis(assembled, source_news[0], sources_str)
+            text = self._render_analysis(assembled, source_news[0], sources_str, search_keywords)
 
         elif format == NewsFormat.FEATURE:
-            text = self._render_feature(assembled, source_news[0], sources_str)
+            text = self._render_feature(assembled, source_news[0], sources_str, search_keywords)
 
         elif format == NewsFormat.NEWSLETTER:
-            text = self._render_newsletter(assembled, source_news[0])
+            text = self._render_newsletter(assembled, source_news[0], search_keywords)
 
         else:
             # 기본: 스트레이트 뉴스
-            text = self._render_straight(assembled, source_news, sources_str)
+            text = self._render_straight(assembled, source_news, sources_str, search_keywords)
 
         return FallbackGeneratorResult(
             text=text,
@@ -173,6 +173,7 @@ class FallbackGenerator:
         assembled: 'AssembledContent',
         source_news: List['NewsWithScores'],
         sources: str,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """스트레이트 뉴스 렌더링 (ContentAssembler 풍부한 내용 + IntelligentNewsGenerator 제목)"""
         sections = assembled.sections
@@ -180,7 +181,8 @@ class FallbackGenerator:
         # 제목 생성: IntelligentNewsGenerator 사용 (표절 방지)
         try:
             # ContentAssembler의 풍부한 lead와 body를 사용하여 제목 생성
-            combined_text = (sections.get("lead", "") + " " + sections.get("body", ""))[:500]
+            # 전체 내용을 사용하여 중요한 팩트를 모두 추출 (최대 2000자)
+            combined_text = (sections.get("lead", "") + " " + sections.get("body", ""))[:2000]
 
             # 임시 NewsWithScores 생성 (풍부한 내용 포함)
             from news_collector.models.news import NewsWithScores
@@ -195,7 +197,8 @@ class FallbackGenerator:
             # IntelligentNewsGenerator로 제목 생성
             result = self.intelligent_generator.generate_news(
                 news_list=[enriched_news],
-                sources=assembled.sources if assembled.sources else [news.source_name for news in source_news]
+                sources=assembled.sources if assembled.sources else [news.source_name for news in source_news],
+                search_keywords=search_keywords
             )
 
             title = result['title']
@@ -226,13 +229,15 @@ class FallbackGenerator:
         self,
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """속보/간략 뉴스 렌더링 (IntelligentNewsGenerator 사용)"""
         try:
             # 간략 뉴스는 제목과 첫 문장만 필요
             result = self.intelligent_generator.generate_news(
                 news_list=[primary_news],
-                sources=[primary_news.source_name]
+                sources=[primary_news.source_name],
+                search_keywords=search_keywords
             )
             title = result['title']
             # 본문의 첫 문장만 추출
@@ -259,12 +264,14 @@ class FallbackGenerator:
         self,
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """SNS 포스트 렌더링 (IntelligentNewsGenerator 사용)"""
         try:
             result = self.intelligent_generator.generate_news(
                 news_list=[primary_news],
-                sources=[primary_news.source_name]
+                sources=[primary_news.source_name],
+                search_keywords=search_keywords
             )
             # SNS용 짧은 훅 생성
             hook = result['title'][:50]
@@ -299,6 +306,7 @@ class FallbackGenerator:
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
         sources: str,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """카드뉴스 렌더링 (IntelligentNewsGenerator 사용)"""
         try:
@@ -322,7 +330,7 @@ class FallbackGenerator:
 
             if not cards:
                 # 폴백: 기존 방식
-                cards = self._create_cards(primary_news)
+                cards = self._create_cards(primary_news, search_keywords=search_keywords)
 
             return self.template_engine.render_card_news(
                 title=title,
@@ -344,7 +352,7 @@ class FallbackGenerator:
                     })
 
             if not cards:
-                cards = self._create_cards(primary_news)
+                cards = self._create_cards(primary_news, search_keywords=search_keywords)
 
             return self.template_engine.render_card_news(
                 title=primary_news.title,
@@ -357,16 +365,30 @@ class FallbackGenerator:
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
         sources: str,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """분석 기사 렌더링 (IntelligentNewsGenerator 사용)"""
         try:
+            # ContentAssembler의 풍부한 내용 사용
+            sections = assembled.sections
+            combined_text = (sections.get("current_situation", "") + " " + sections.get("background", "") + " " + sections.get("outlook", ""))[:2000]
+
+            # 임시 NewsWithScores 생성 (풍부한 내용 포함)
+            from news_collector.models.news import NewsWithScores
+            enriched_news = NewsWithScores(
+                id="temp",
+                title=primary_news.title,
+                body=combined_text,
+                source_name=primary_news.source_name,
+                url=primary_news.url if primary_news.url else ""
+            )
+
             result = self.intelligent_generator.generate_news(
-                news_list=[primary_news],
-                sources=[primary_news.source_name]
+                news_list=[enriched_news],
+                sources=[primary_news.source_name],
+                search_keywords=search_keywords
             )
             title = result['title']
-
-            sections = assembled.sections
 
             return self.template_engine.render(NewsFormat.ANALYSIS, {
                 "title": title,
@@ -397,6 +419,7 @@ class FallbackGenerator:
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
         sources: str,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """기획 기사 렌더링 (IntelligentNewsGenerator 사용)"""
         try:
@@ -434,6 +457,7 @@ class FallbackGenerator:
         self,
         assembled: 'AssembledContent',
         primary_news: NewsWithScores,
+        search_keywords: Optional[List[str]] = None,
     ) -> str:
         """뉴스레터 렌더링"""
         sections = assembled.sections
@@ -450,12 +474,13 @@ class FallbackGenerator:
         # 상위 3개 단어
         return " ".join(f"#{w}" for w in words[:3])
 
-    def _create_cards(self, news: NewsWithScores, max_cards: int = 5) -> List[Dict[str, str]]:
+    def _create_cards(self, news: NewsWithScores, max_cards: int = 5, search_keywords: Optional[List[str]] = None) -> List[Dict[str, str]]:
         """카드뉴스용 카드 생성 (폴백용, IntelligentNewsGenerator 사용)"""
         try:
             result = self.intelligent_generator.generate_news(
                 news_list=[news],
-                sources=[news.source_name]
+                sources=[news.source_name],
+                search_keywords=search_keywords
             )
             title = result['title']
             body = result['body'] or ""
@@ -566,24 +591,14 @@ class NewsGenerator:
             )
 
         try:
-            # 포맷 자동 선택
-            if target_format is None:
+            # 포맷 자동 선택 (컨텐츠 풍부화 전 임시 선택)
+            temp_format = target_format
+            if temp_format is None:
                 recommendation = self.format_selector.recommend_from_analysis(source_news[0])
                 if recommendation.recommendations:
-                    target_format = recommendation.recommendations[0].format
+                    temp_format = recommendation.recommendations[0].format
                 else:
-                    target_format = NewsFormat.STRAIGHT
-
-            # 프롬프트 생성
-            prompt = self.prompt_builder.build(
-                format=target_format,
-                source_news=source_news,
-                mode=mode,
-                style=style,
-                language=language,
-                max_length=max_length,
-                include_citations=include_citations,
-            )
+                    temp_format = NewsFormat.STRAIGHT
 
             # 뉴스 생성
             images: List[str] = []
@@ -591,14 +606,57 @@ class NewsGenerator:
 
             used_claude = False
             if self.claude.is_available:
+                # 프롬프트 생성
+                prompt = self.prompt_builder.build(
+                    format=temp_format,
+                    source_news=source_news,
+                    mode=mode,
+                    style=style,
+                    language=language,
+                    max_length=max_length,
+                    include_citations=include_citations,
+                )
                 try:
                     generated_text = self.claude.generate(prompt)
                     sources = list(set(n.source_name for n in source_news if n.source_name))
                     used_claude = True
+                    target_format = temp_format
                 except Exception as e:
                     logger.warning("Claude API 실패, 템플릿 폴백 전환: %s", e)
 
             if not used_claude:
+                # Fallback 모드: 컨텐츠 풍부화 후 재선택
+                if target_format is None and enrich_content:
+                    # ContentAssembler로 먼저 컨텐츠 조립 (포맷은 임시로 STRAIGHT 사용)
+                    test_assembled = self.fallback.content_assembler.assemble(
+                        source_news=source_news,
+                        format=NewsFormat.STRAIGHT,
+                        search_keywords=search_keywords,
+                        enrich_content=True,
+                    )
+
+                    # 풍부화된 컨텐츠 길이로 포맷 재선택
+                    enriched_length = len(test_assembled.sections.get("body", "")) + len(test_assembled.sections.get("lead", ""))
+
+                    # 임시 NewsWithScores 생성 (풍부화된 길이 반영)
+                    enriched_news = NewsWithScores(
+                        id=source_news[0].id,
+                        title=source_news[0].title,
+                        body="x" * enriched_length,  # 길이만 반영
+                        source_name=source_news[0].source_name,
+                        url=source_news[0].url if source_news[0].url else ""
+                    )
+
+                    # 풍부화된 컨텐츠 기반으로 재선택
+                    recommendation = self.format_selector.recommend_from_analysis(enriched_news)
+                    if recommendation.recommendations:
+                        target_format = recommendation.recommendations[0].format
+                        logger.info(f"풍부화 후 포맷 재선택: {temp_format} -> {target_format} (길이: {enriched_length}자)")
+                    else:
+                        target_format = NewsFormat.STRAIGHT
+                else:
+                    target_format = temp_format
+
                 fallback_result = self.fallback.generate(
                     target_format,
                     source_news,

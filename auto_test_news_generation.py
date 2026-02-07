@@ -287,8 +287,8 @@ def analyze_structure(
         elif analysis.body_length > std_max:
             analysis.issues.append(f"BODY_TOO_LONG:{analysis.body_length}")
 
-        if len(images) > 1:
-            analysis.issues.append(f"TOO_MANY_IMAGES_FOR_STANDARD:{len(images)}")
+        # Standard 타입도 이미지가 있어야 함 (1-4장 권장)
+        # 이미지 개수 제한 검증 제거 - Visual과의 차이는 개수가 아니라 성격
 
     elif news_type == "visual":
         vis_min = vis_cfg.get("min", 200)
@@ -324,28 +324,13 @@ def analyze_structure(
 # ==============================================================================
 
 def detect_news_type(text: str, title: str, image_count: int) -> str:
-    """뉴스 유형 감지"""
-    combined = f"{title} {text}".lower()
+    """뉴스 유형 감지 (설정 기반, content_assembler와 동일 로직 사용)"""
+    from news_collector.generation.content_assembler import NewsTypeDetector
 
-    # 비주얼형: 이미지 2개 이상 또는 비주얼 키워드
-    visual_keywords = ['포토', '화보', '현장', '모습', '사진', '갤러리',
-                       '인터뷰', '직캠', '스냅', '공개', '포착']
-    if image_count >= 2 or any(kw in combined for kw in visual_keywords):
-        return "visual"
-
-    # 데이터형: 숫자 밀도 높음 또는 데이터 키워드
-    numeric_chars = sum(1 for c in combined if c.isdigit())
-    density = numeric_chars / len(combined) if combined else 0
-    data_keywords = ['통계', '지표', '수치', '조사', '분석', '전망', '순위', '증감']
-
-    if density >= 0.03 or any(kw in combined for kw in data_keywords):
-        number_patterns = [r'\d+%', r'\d+억', r'\d+조', r'\d+만']
-        pattern_matches = sum(1 for p in number_patterns if re.search(p, combined))
-        if pattern_matches >= 2:
-            return "data"
-
-    # 기본: 일반형
-    return "standard"
+    # NewsTypeDetector 사용 (news_format_spec.yaml 설정 기반)
+    # 하드코딩 제거 - 모든 타입 감지 규칙은 config/news_format_spec.yaml에서 관리
+    detector = NewsTypeDetector()
+    return detector.detect(text=text, title=title, image_count=image_count)
 
 
 # ==============================================================================
@@ -389,10 +374,12 @@ def run_single_test(
                     scraped = scraper.scrape(news.url)
                     if scraped.success and len(scraped.full_body) > len(news.body or ""):
                         from dataclasses import replace
+                        # Phase 2: ImageInfo에서 URL 추출
+                        scraped_urls = [img.url for img in scraped.images[:max_scrape_imgs]]
                         news = replace(
                             news,
                             body=scraped.full_body,
-                            image_urls=list(news.image_urls or []) + scraped.images[:max_scrape_imgs],
+                            image_urls=list(news.image_urls or []) + scraped_urls,
                         )
                 except Exception:
                     pass

@@ -1,0 +1,189 @@
+{
+  "summary": {
+    "total_tests": 5,
+    "successful_tests": 5,
+    "failed_tests": 0,
+    "avg_score": 87.0,
+    "avg_char_count": 640.6,
+    "avg_generation_time_ms": 6659.2,
+    "issue_counts": {
+      "BODY_TOO_SHORT": 1
+    },
+    "type_distribution": {
+      "visual": 3,
+      "standard": 1,
+      "data": 1
+    }
+  },
+  "results": [
+    {
+      "test_id": 1,
+      "keyword": "국회",
+      "timestamp": "2026-02-07T13:41:55.955341",
+      "search_count": 5,
+      "search_time_ms": 1157,
+      "generation_success": true,
+      "generation_time_ms": 5951,
+      "generated_char_count": 166,
+      "source_count": 5,
+      "score": 60.0,
+      "issues": [
+        "BODY_TOO_SHORT:166"
+      ],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 38,
+        "summary_length": 130,
+        "body_length": 166,
+        "total_length": 204,
+        "issues": [
+          "BODY_TOO_SHORT:166"
+        ]
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 2,
+      "keyword": "날씨",
+      "timestamp": "2026-02-07T13:42:15.905408",
+      "search_count": 5,
+      "search_time_ms": 1321,
+      "generation_success": true,
+      "generation_time_ms": 4323,
+      "generated_char_count": 581,
+      "source_count": 5,
+      "score": 100.0,
+      "issues": [],
+      "structure": {
+        "news_type": "standard",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 33,
+        "summary_length": 558,
+        "body_length": 581,
+        "total_length": 614,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 3,
+      "keyword": "일본",
+      "timestamp": "2026-02-07T13:42:31.701398",
+      "search_count": 5,
+      "search_time_ms": 951,
+      "generation_success": true,
+      "generation_time_ms": 6979,
+      "generated_char_count": 1187,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 57,
+        "summary_length": 1131,
+        "body_length": 1187,
+        "total_length": 1244,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 4,
+      "keyword": "삼성전자",
+      "timestamp": "2026-02-07T13:42:54.210382",
+      "search_count": 5,
+      "search_time_ms": 1053,
+      "generation_success": true,
+      "generation_time_ms": 8286,
+      "generated_char_count": 959,
+      "source_count": 5,
+      "score": 95.0,
+      "issues": [],
+      "structure": {
+        "news_type": "data",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": true,
+        "has_images": true,
+        "title_length": 45,
+        "summary_length": 703,
+        "body_length": 959,
+        "total_length": 1004,
+        "issues": []
+      },
+      "images": {
+        "total_count": 3,
+        "valid_count": 3,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    },
+    {
+      "test_id": 5,
+      "keyword": "전기차",
+      "timestamp": "2026-02-07T13:43:16.391462",
+      "search_count": 5,
+      "search_time_ms": 1081,
+      "generation_success": true,
+      "generation_time_ms": 7757,
+      "generated_char_count": 310,
+      "source_count": 5,
+      "score": 85.0,
+      "issues": [],
+      "structure": {
+        "news_type": "visual",
+        "has_title": true,
+        "has_summary": false,
+        "has_lead": true,
+        "has_body": true,
+        "has_closing": false,
+        "has_images": true,
+        "title_length": 36,
+        "summary_length": 267,
+        "body_length": 310,
+        "total_length": 346,
+        "issues": []
+      },
+      "images": {
+        "total_count": 5,
+        "valid_count": 5,
+        "invalid_count": 0,
+        "invalid_reasons": []
+      }
+    }
+  ]
+}
