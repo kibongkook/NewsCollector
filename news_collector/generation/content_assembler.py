@@ -1360,24 +1360,38 @@ class ContentAssembler:
                             topic_coverage[sid1] = topic_coverage.get(sid1, 1) + 1
                             topic_coverage[sid2] = topic_coverage.get(sid2, 1) + 1
 
+        # 고신뢰 매체 존재 시 저신뢰 매체 후보 제외
+        # (credibility >= 0.6인 기사가 있으면, < 0.5인 기사는 primary 후보에서 제외)
+        eligible_sids = set(source_scores.keys())
+        if news_meta:
+            high_cred_exists = any(
+                (getattr(news_meta.get(sid), 'credibility_score', 0) or 0) >= 0.6
+                for sid in eligible_sids if sid in news_meta
+            )
+            if high_cred_exists:
+                low_cred_sids = {
+                    sid for sid in eligible_sids
+                    if sid in news_meta and (getattr(news_meta[sid], 'credibility_score', 0) or 0) < 0.5
+                }
+                filtered = eligible_sids - low_cred_sids
+                if filtered:  # 최소 1개는 남겨야 함
+                    eligible_sids = filtered
+
         # 최종 점수 계산
         final_scores = {}
-        for sid in source_scores:
+        for sid in eligible_sids:
             count = source_counts[sid]
             avg_importance = source_scores[sid] / count
             keyword_density = source_keyword_hits[sid] / count
             newsworthy_bonus = 0.3 if source_newsworthy.get(sid, False) else 0.0
             content_bonus = min(count * 0.02, 0.2)
 
-            # 매체 신뢰도/품질 보너스 + 저신뢰 패널티
+            # 매체 신뢰도/품질 보너스
             credibility_bonus = 0.0
             if sid in news_meta:
                 cred = getattr(news_meta[sid], 'credibility_score', 0) or 0
                 qual = getattr(news_meta[sid], 'quality_score', 0) or 0
                 credibility_bonus = (cred + qual) * 0.3  # 최대 ~0.54
-                # 저신뢰 매체 패널티 (credibility < 0.5)
-                if cred < 0.5:
-                    credibility_bonus -= 0.2
 
             # 토픽 커버리지 보너스 (같은 토픽 다수 보도 시)
             coverage = topic_coverage.get(sid, 1)
