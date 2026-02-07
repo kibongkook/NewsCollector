@@ -40,7 +40,7 @@ _MEDIA_SUFFIX_PATTERN = re.compile(
     r'\s*[-–—|]\s*(뉴스1|연합뉴스|조선일보|중앙일보|한국일보|경향신문|동아일보|'
     r'매일경제|한국경제|머니투데이|뉴시스|YTN|KBS|MBC|SBS|JTBC|이데일리|'
     r'파이낸셜뉴스|서울신문|세계일보|문화일보|아시아경제|헤럴드경제|디지털타임스|'
-    r'전자신문|한겨레|CBS|TV조선|채널A|MBN|아주경제|인포스탁데일리|'
+    r'전자신문|한겨레|CBS|TV조선|채널A|MBN|아주경제|인포스탁데일리|BBC|AP|로이터|'
     r'dailian\.co\.kr|imaeil\.com|g-enews\.com|viva100\.com|'
     r'sisajournal-e\.com|joongangenews\.com|mbn\.mk\.co\.kr|'
     r'[a-zA-Z0-9\-]+\.(com|co\.kr|net|org))\s*$'

@@ -1166,6 +1166,15 @@ class ContentAssembler:
         re.compile(r'^\[.{2,8}\s+(기자|앵커|특파원|리포터)\]'),
         # 방송 프로그램 큐시트 마커
         re.compile(r'^(앵커|기자|리포터)\s*[:>]\s*'),
+        # ── SNS/앱 채널 홍보 ──
+        # "[카카오톡] YTN 검색해 채널 추가", "[텔레그램] 채널 구독"
+        re.compile(r'\[(카카오톡|카톡|텔레그램|유튜브)\]'),
+        re.compile(r'(검색해|검색하고)\s*(채널|친구)\s*(추가|등록)'),
+        # 뉴스 슬로건/캐치프레이즈 ("당신의 제보가 뉴스가 됩니다")
+        re.compile(r'(당신의|여러분의)\s*(제보|의견|소식).*(뉴스|됩니다)'),
+        re.compile(r'(채널|구독|알림)\s*(추가|등록|설정).*(부탁|감사|해주)'),
+        # 앱 다운로드 유도
+        re.compile(r'(앱|어플|APP)\s*(다운|설치|다운로드)'),
     ]
 
     # 오피니언/칼럼 감지 패턴 (기사 전체 레벨에서 필터)
@@ -1279,24 +1288,56 @@ class ContentAssembler:
 
         return " ".join(result)
 
+    # Primary source 선택 시 뉴스가치 키워드
+    _PRIMARY_NEWSWORTHY_KEYWORDS = [
+        '하한가', '상한가', '급등', '급락', '폭락', '폭등', '사상최고', '사상최대',
+        '사상최저', '역대최', '신기록', '긴급', '속보', '비상', '파산', '부도',
+        '서킷브레이커', '대폭', '전면', '중단', '재개', '철수', '파업', '오지급',
+        '초유', '사고', '사태', '논란',
+    ]
+
     def _get_primary_source(self, sentences: List[ClassifiedSentence]) -> Optional[str]:
         """가장 관련도 높은 소스 기사 ID 반환 (교차 기사 혼합 방지)
 
-        키워드 매칭과 중요도를 합산하여 가장 관련성 높은 소스를 식별합니다.
-        이를 통해 본문에서 무관한 기사의 문장이 섞이는 것을 방지합니다.
+        평균 중요도 + 키워드 밀도 + 뉴스가치 보너스로 평가합니다.
+        기사 길이(문장 수)에 비례하지 않도록 평균값을 사용합니다.
         """
         if not sentences:
             return None
 
         source_scores: Dict[str, float] = {}
+        source_counts: Dict[str, int] = {}
+        source_keyword_hits: Dict[str, int] = {}
+        source_newsworthy: Dict[str, bool] = {}
+
         for s in sentences:
             sid = s.source_news_id
-            score = s.importance + len(s.matched_keywords) * 0.3
-            source_scores[sid] = source_scores.get(sid, 0.0) + score
+            source_scores[sid] = source_scores.get(sid, 0.0) + s.importance
+            source_counts[sid] = source_counts.get(sid, 0) + 1
+            source_keyword_hits[sid] = source_keyword_hits.get(sid, 0) + len(s.matched_keywords)
+            # 뉴스가치 키워드 체크
+            if not source_newsworthy.get(sid, False):
+                for nw in self._PRIMARY_NEWSWORTHY_KEYWORDS:
+                    if nw in s.text:
+                        source_newsworthy[sid] = True
+                        break
 
-        if source_scores:
-            return max(source_scores, key=lambda x: source_scores[x])
-        return None
+        if not source_scores:
+            return None
+
+        # 최종 점수: 평균 중요도 + 키워드 밀도 + 뉴스가치 보너스 + 문장 수 소량 보너스
+        final_scores = {}
+        for sid in source_scores:
+            count = source_counts[sid]
+            avg_importance = source_scores[sid] / count
+            keyword_density = source_keyword_hits[sid] / count
+            newsworthy_bonus = 0.3 if source_newsworthy.get(sid, False) else 0.0
+            # 문장 수 보너스 (최소 컨텐츠 보장, 최대 0.2)
+            content_bonus = min(count * 0.02, 0.2)
+
+            final_scores[sid] = avg_importance + keyword_density * 0.5 + newsworthy_bonus + content_bonus
+
+        return max(final_scores, key=lambda x: final_scores[x])
 
     def _create_paragraphs(self, sentences: List[ClassifiedSentence]) -> str:
         """지능형 문단 구분: 역할과 의미적 연결성 기반 자동 그룹핑
