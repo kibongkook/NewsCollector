@@ -591,34 +591,39 @@ class ContentAssembler:
                 if not img:
                     continue
 
-                # Phase 2 디버깅: ImageInfo 타입 체크
+                # Phase 2: ImageInfo 타입 체크 및 메타데이터 활용
+                img_url = img
+                img_info = None
+
                 if not isinstance(img, str):
-                    # ImageInfo 객체가 온 경우 URL만 추출
-                    logger.warning(f"ImageInfo 객체 감지 (타입: {type(img).__name__}), URL 추출")
+                    # ImageInfo 객체가 온 경우 메타데이터 활용
                     from news_collector.ingestion.content_scraper import ImageInfo
                     if isinstance(img, ImageInfo):
-                        img = img.url
+                        img_url = img.url
+                        img_info = img  # 메타데이터 보존
+                        logger.debug(f"ImageInfo 활용: alt={img.alt}, position={img.position}")
                     else:
                         logger.error(f"알 수 없는 이미지 타입: {type(img)}")
                         continue
 
                 # URL 정규화 (쿼리 파라미터 제거)
-                normalized_url = self._normalize_image_url(img)
+                normalized_url = self._normalize_image_url(img_url)
 
                 # 정규화된 URL로 중복 체크
                 if normalized_url in seen_normalized_urls:
                     continue
 
                 # 기본 유효성 체크
-                if not self._is_valid_news_image(img):
+                if not self._is_valid_news_image(img_url):
                     continue
 
-                # 워터마크 처리 (원본 찾기 또는 스크린샷)
+                # 워터마크 처리 (원본 찾기 또는 스크린샷) + 관련성 검사
                 clean_img = self._get_clean_image(
                     article_text,
                     article_keywords,
-                    img,
-                    news_url
+                    img_url,
+                    news_url,
+                    img_info  # ImageInfo 전달
                 )
 
                 if clean_img:
@@ -1813,38 +1818,84 @@ class ContentAssembler:
     def _check_image_relevance(
         self,
         img_url: str,
-        article_keywords: List[str]
+        article_keywords: List[str],
+        img_info: Optional[Any] = None
     ) -> bool:
-        """이미지-내용 관련성 검증
+        """이미지-내용 관련성 검증 (개선된 버전)
 
-        이미지 alt text/파일명과 기사 키워드 매칭
+        점수 기반 시스템:
+        - 높은 관련성 (5점 이상): 확실히 관련됨
+        - 중간 관련성 (2-4점): 관련 가능성 있음
+        - 낮은 관련성 (0-1점): 관련 없음
+
+        점수 부여:
+        - 키워드 매칭 (alt/title): +3점
+        - 키워드 매칭 (파일명): +2점
+        - article 태그 내부: +2점
+        - 상위 위치 (position < 3): +1점
 
         Args:
             img_url: 이미지 URL
             article_keywords: 기사 키워드
+            img_info: 이미지 메타데이터 (ImageInfo 객체)
 
         Returns:
-            True: 관련성 있음, False: 무관
+            True: 관련성 있음 (2점 이상), False: 관련 없음
         """
         if not article_keywords:
             return True  # 키워드 없으면 통과
 
         try:
-            # URL 파일명에서 키워드 추출
+            relevance_score = 0
+
+            # ImageInfo가 있으면 메타데이터 활용
+            if img_info:
+                # 1. article 태그 내부 (+3점, 기본 관련성 높음)
+                if hasattr(img_info, 'in_article') and img_info.in_article:
+                    relevance_score += 3
+                    logger.debug(f"이미지 article 내부 (점수: {relevance_score})")
+
+                # 2. alt/title에서 키워드 매칭 (+3점 추가)
+                img_keywords = img_info.get_relevance_keywords()
+                for keyword in article_keywords[:5]:
+                    keyword_lower = keyword.lower()
+                    if any(keyword_lower in img_kw for img_kw in img_keywords):
+                        relevance_score += 3
+                        logger.debug(f"이미지 alt/title 매칭: '{keyword}' (점수: {relevance_score})")
+                        break
+
+                # 3. 상위 위치 (+1점)
+                if hasattr(img_info, 'position') and img_info.position < 3:
+                    relevance_score += 1
+            else:
+                # ImageInfo 없는 경우 기본 점수 (+2점, 관대하게 처리)
+                relevance_score += 2
+                logger.debug(f"ImageInfo 없음, 기본 점수 부여 (점수: {relevance_score})")
+
+            # 4. URL 파일명에서 키워드 매칭 (+2점)
             from urllib.parse import urlparse
             parsed = urlparse(img_url)
             filename = parsed.path.split('/')[-1].lower()
 
-            # 키워드 매칭
-            for keyword in article_keywords[:5]:  # 상위 5개 키워드만
+            for keyword in article_keywords[:5]:
                 if keyword.lower() in filename:
-                    logger.debug(f"이미지 관련성 확인: '{keyword}' in {filename}")
-                    return True
+                    relevance_score += 2
+                    logger.debug(f"이미지 파일명 매칭: '{keyword}' in {filename} (점수: {relevance_score})")
+                    break
 
-            # 매칭 안 되어도 일단 통과 (너무 엄격하면 이미지 없음)
-            return True
+            # 최종 판단
+            # - 2점 미만: 관련 없음
+            # - 2점 이상: 관련 있음 (article 내부는 자동 3점이므로 통과)
+            is_relevant = relevance_score >= 2
 
-        except Exception:
+            if not is_relevant:
+                logger.debug(f"이미지 관련성 낮음 (점수: {relevance_score}): {img_url}")
+
+            return is_relevant
+
+        except Exception as e:
+            logger.debug(f"이미지 관련성 체크 실패: {e}")
+            # 예외 발생 시 관대하게 통과 (너무 엄격하면 이미지 없음)
             return True
 
     def _extract_organizations(self, text: str) -> List[str]:
@@ -2064,13 +2115,14 @@ class ContentAssembler:
         article_text: str,
         article_keywords: List[str],
         img_url: str,
-        news_url: str
+        news_url: str,
+        img_info: Optional[Any] = None
     ) -> Optional[str]:
         """깨끗한 이미지 확보 (워터마크 제거/우회 + 품질 검증)
 
         전략:
         1. 기본 품질 체크 (파일 크기, 해상도)
-        2. 관련성 체크 (키워드 매칭)
+        2. 관련성 체크 (키워드 매칭 + ImageInfo 메타데이터)
         3. 워터마크 위치 감지
         4. 중앙 워터마크 → 원본 찾기 (실패 시 None)
         5. 코너 워터마크 + 대기업/정부 → 원본 찾기 시도 → 실패 시 스크린샷
@@ -2081,6 +2133,7 @@ class ContentAssembler:
             article_keywords: 기사 키워드
             img_url: 원본 이미지 URL (워터마크 있을 수 있음)
             news_url: 뉴스 기사 URL
+            img_info: 이미지 메타데이터 (ImageInfo 객체)
 
         Returns:
             깨끗한 이미지 URL/경로 or None
@@ -2097,8 +2150,8 @@ class ContentAssembler:
                 logger.debug(f"이미지 해상도 부족: {width}x{height}")
                 return None
 
-        # 0-2. 관련성 체크
-        if not self._check_image_relevance(img_url, article_keywords):
+        # 0-2. 관련성 체크 (ImageInfo 메타데이터 활용)
+        if not self._check_image_relevance(img_url, article_keywords, img_info):
             logger.debug(f"이미지 관련성 낮음: {img_url}")
             return None
 
