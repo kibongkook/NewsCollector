@@ -1369,12 +1369,15 @@ class ContentAssembler:
             newsworthy_bonus = 0.3 if source_newsworthy.get(sid, False) else 0.0
             content_bonus = min(count * 0.02, 0.2)
 
-            # 매체 신뢰도/품질 보너스 (0 ~ 0.3)
+            # 매체 신뢰도/품질 보너스 + 저신뢰 패널티
             credibility_bonus = 0.0
             if sid in news_meta:
                 cred = getattr(news_meta[sid], 'credibility_score', 0) or 0
                 qual = getattr(news_meta[sid], 'quality_score', 0) or 0
-                credibility_bonus = (cred + qual) * 0.2  # 최대 ~0.36
+                credibility_bonus = (cred + qual) * 0.3  # 최대 ~0.54
+                # 저신뢰 매체 패널티 (credibility < 0.5)
+                if cred < 0.5:
+                    credibility_bonus -= 0.2
 
             # 토픽 커버리지 보너스 (같은 토픽 다수 보도 시)
             coverage = topic_coverage.get(sid, 1)
