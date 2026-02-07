@@ -569,15 +569,18 @@ class ContentAssembler:
         primary_source_id = self._get_primary_source(unique_sentences, source_news)
 
         # 2.6. Primary source 문장 부스트 (본문 일관성 강화)
-        # 비-primary 소스에서 키워드가 없는 문장은 중요도를 낮춤
+        # 비-primary 소스 문장은 키워드 유무에 따라 차등 감소
         if primary_source_id and search_keywords:
             for sent in unique_sentences:
                 if sent.source_news_id == primary_source_id:
                     # Primary source 문장은 부스트
-                    sent.importance = min(sent.importance * 1.3, 1.0)
+                    sent.importance = min(sent.importance * 1.5, 1.0)
                 elif not sent.matched_keywords:
                     # 비-primary, 키워드 없음 → 중요도 대폭 감소
                     sent.importance *= 0.3
+                else:
+                    # 비-primary, 키워드 있음 → 중요도 소폭 감소
+                    sent.importance *= 0.6
 
         # 3. 중요도순 정렬
         sorted_sentences = sorted(
@@ -585,7 +588,7 @@ class ContentAssembler:
         )
 
         # 4. 포맷별 섹션 구성 (뉴스 유형 반영)
-        sections = self._build_sections(sorted_sentences, format, detected_type)
+        sections = self._build_sections(sorted_sentences, format, detected_type, primary_source_id)
 
         # 5. 출처 정리
         sources = list(set(
@@ -1173,6 +1176,9 @@ class ContentAssembler:
         # 뉴스 슬로건/캐치프레이즈 ("당신의 제보가 뉴스가 됩니다")
         re.compile(r'(당신의|여러분의)\s*(제보|의견|소식).*(뉴스|됩니다)'),
         re.compile(r'(채널|구독|알림)\s*(추가|등록|설정).*(부탁|감사|해주)'),
+        # 유튜브/포털 팔로잉/검색 유도 ("유튜브와 포털에서... 검색해 팔로잉하시면")
+        re.compile(r'(유튜브|포털|네이버|다음).*(검색해|팔로잉|팔로우|구독).*(정보|만나)'),
+        re.compile(r'팔로잉하시면.*정보를'),
         # 앱 다운로드 유도
         re.compile(r'(앱|어플|APP)\s*(다운|설치|다운로드)'),
         # ── 사진 캡션/저작권 ──
@@ -1504,6 +1510,7 @@ class ContentAssembler:
         sentences: List[ClassifiedSentence],
         format: NewsFormat,
         news_type: Optional[str] = None,
+        primary_source_id: Optional[str] = None,
     ) -> Dict[str, str]:
         """포맷별 섹션 구성 (뉴스 유형 반영)"""
         format_name = format.value.lower()
@@ -1512,10 +1519,10 @@ class ContentAssembler:
         if format == NewsFormat.STRAIGHT:
             # 뉴스 유형별 빌더 분기
             if news_type == NewsType.VISUAL:
-                return self._build_visual_straight(sentences, spec)
+                return self._build_visual_straight(sentences, spec, primary_source_id)
             elif news_type == NewsType.DATA:
-                return self._build_data_straight(sentences, spec)
-            return self._build_straight(sentences, spec)
+                return self._build_data_straight(sentences, spec, primary_source_id)
+            return self._build_straight(sentences, spec, primary_source_id)
         elif format == NewsFormat.BRIEF:
             return self._build_brief(sentences, spec)
         elif format == NewsFormat.ANALYSIS:
@@ -1530,12 +1537,13 @@ class ContentAssembler:
             return self._build_newsletter(sentences, spec)
         else:
             # 기본: 스트레이트
-            return self._build_straight(sentences, spec)
+            return self._build_straight(sentences, spec, primary_source_id)
 
     def _build_straight(
         self,
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
+        primary_source_id: Optional[str] = None,
     ) -> Dict[str, str]:
         """스트레이트 뉴스 구성 (제한 없음, 원본 기사의 자연스러운 구조 존중)"""
         sections_spec = spec.get("sections", {})
@@ -1552,8 +1560,8 @@ class ContentAssembler:
 
         used_texts: Set[str] = set()
 
-        # ★ Primary source 식별 (교차 기사 혼합 방지)
-        primary_source = self._get_primary_source(sentences)
+        # ★ Primary source: assemble()에서 전달받은 ID 사용 (신뢰도/커버리지 반영)
+        primary_source = primary_source_id or self._get_primary_source(sentences)
 
         # 안전장치: 최대 문장 수 제한 (극단적 케이스만)
         sentences = sentences[:self.MAX_TOTAL_SENTENCES]
@@ -1822,6 +1830,7 @@ class ContentAssembler:
         self,
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
+        primary_source_id: Optional[str] = None,
     ) -> Dict[str, str]:
         """비주얼 뉴스 구성 (이미지 중심, 제한 없음)
 
@@ -1831,7 +1840,7 @@ class ContentAssembler:
         - 본문: 장면/내용 묘사
         - 마무리: 전망/마무리
         """
-        primary_source = self._get_primary_source(sentences)
+        primary_source = primary_source_id or self._get_primary_source(sentences)
         used_texts: Set[str] = set()
 
         # 안전장치
@@ -1877,6 +1886,7 @@ class ContentAssembler:
         self,
         sentences: List[ClassifiedSentence],
         spec: Dict[str, Any],
+        primary_source_id: Optional[str] = None,
     ) -> Dict[str, str]:
         """데이터 뉴스 구성 (수치/통계 중심, 제한 없음)
 
@@ -1886,7 +1896,7 @@ class ContentAssembler:
         - 본문: 분석/배경, 숫자 포함 문장 우선
         - 마무리: 전망/시사점
         """
-        primary_source = self._get_primary_source(sentences)
+        primary_source = primary_source_id or self._get_primary_source(sentences)
         used_texts: Set[str] = set()
 
         # 안전장치
