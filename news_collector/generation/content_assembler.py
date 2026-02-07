@@ -566,7 +566,7 @@ class ContentAssembler:
         unique_sentences = self._deduplicate(all_sentences)
 
         # 2.5. Primary source 식별 (제목-본문 일치용)
-        primary_source_id = self._get_primary_source(unique_sentences)
+        primary_source_id = self._get_primary_source(unique_sentences, source_news)
 
         # 2.6. Primary source 문장 부스트 (본문 일관성 강화)
         # 비-primary 소스에서 키워드가 없는 문장은 중요도를 낮춤
@@ -1175,6 +1175,15 @@ class ContentAssembler:
         re.compile(r'(채널|구독|알림)\s*(추가|등록|설정).*(부탁|감사|해주)'),
         # 앱 다운로드 유도
         re.compile(r'(앱|어플|APP)\s*(다운|설치|다운로드)'),
+        # ── 사진 캡션/저작권 ──
+        # "사진 온라인 커뮤니티 캡처", "사진=연합뉴스", "*재판매 및 DB 금지"
+        re.compile(r'사진\s*(온라인|커뮤니티|캡처|제공|출처)'),
+        re.compile(r'\*재판매'),
+        re.compile(r'DB\s*금지'),
+        # ── 이메일/연락처 ──
+        re.compile(r'[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}'),
+        # 공감언론/뉴스 슬로건
+        re.compile(r'공감\s*언론'),
     ]
 
     # 오피니언/칼럼 감지 패턴 (기사 전체 레벨에서 필터)
@@ -1296,14 +1305,26 @@ class ContentAssembler:
         '초유', '사고', '사태', '논란',
     ]
 
-    def _get_primary_source(self, sentences: List[ClassifiedSentence]) -> Optional[str]:
+    def _get_primary_source(
+        self,
+        sentences: List[ClassifiedSentence],
+        source_news: Optional[List['NewsWithScores']] = None,
+    ) -> Optional[str]:
         """가장 관련도 높은 소스 기사 ID 반환 (교차 기사 혼합 방지)
 
-        평균 중요도 + 키워드 밀도 + 뉴스가치 보너스로 평가합니다.
-        기사 길이(문장 수)에 비례하지 않도록 평균값을 사용합니다.
+        평가 기준:
+        1. 평균 중요도 + 키워드 밀도 + 뉴스가치 보너스
+        2. 매체 신뢰도/품질 반영
+        3. 토픽 커버리지 (같은 사건을 다수 기사가 보도하면 해당 기사 우선)
         """
         if not sentences:
             return None
+
+        # 소스 뉴스 메타데이터 맵
+        news_meta: Dict[str, 'NewsWithScores'] = {}
+        if source_news:
+            for n in source_news:
+                news_meta[n.id] = n
 
         source_scores: Dict[str, float] = {}
         source_counts: Dict[str, int] = {}
@@ -1325,17 +1346,48 @@ class ContentAssembler:
         if not source_scores:
             return None
 
-        # 최종 점수: 평균 중요도 + 키워드 밀도 + 뉴스가치 보너스 + 문장 수 소량 보너스
+        # 토픽 커버리지 계산: 제목 Jaccard 유사도로 같은 사건 보도 여부 판단
+        topic_coverage: Dict[str, int] = {sid: 1 for sid in source_scores}
+        if news_meta:
+            sids = list(source_scores.keys())
+            for i, sid1 in enumerate(sids):
+                for sid2 in sids[i + 1:]:
+                    n1 = news_meta.get(sid1)
+                    n2 = news_meta.get(sid2)
+                    if n1 and n2 and n1.title and n2.title:
+                        sim = self._jaccard_similarity(n1.title, n2.title)
+                        if sim >= 0.2:  # 20% 이상 제목 유사 = 같은 토픽
+                            topic_coverage[sid1] = topic_coverage.get(sid1, 1) + 1
+                            topic_coverage[sid2] = topic_coverage.get(sid2, 1) + 1
+
+        # 최종 점수 계산
         final_scores = {}
         for sid in source_scores:
             count = source_counts[sid]
             avg_importance = source_scores[sid] / count
             keyword_density = source_keyword_hits[sid] / count
             newsworthy_bonus = 0.3 if source_newsworthy.get(sid, False) else 0.0
-            # 문장 수 보너스 (최소 컨텐츠 보장, 최대 0.2)
             content_bonus = min(count * 0.02, 0.2)
 
-            final_scores[sid] = avg_importance + keyword_density * 0.5 + newsworthy_bonus + content_bonus
+            # 매체 신뢰도/품질 보너스 (0 ~ 0.3)
+            credibility_bonus = 0.0
+            if sid in news_meta:
+                cred = getattr(news_meta[sid], 'credibility_score', 0) or 0
+                qual = getattr(news_meta[sid], 'quality_score', 0) or 0
+                credibility_bonus = (cred + qual) * 0.2  # 최대 ~0.36
+
+            # 토픽 커버리지 보너스 (같은 토픽 다수 보도 시)
+            coverage = topic_coverage.get(sid, 1)
+            coverage_bonus = min((coverage - 1) * 0.15, 0.45)  # 최대 0.45 (4개 이상)
+
+            final_scores[sid] = (
+                avg_importance
+                + keyword_density * 0.5
+                + newsworthy_bonus
+                + content_bonus
+                + credibility_bonus
+                + coverage_bonus
+            )
 
         return max(final_scores, key=lambda x: final_scores[x])
 
