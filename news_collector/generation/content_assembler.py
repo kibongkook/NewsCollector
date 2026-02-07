@@ -663,6 +663,17 @@ class ContentAssembler:
             primary_source_id=primary_source_id,
         )
 
+    # 다의어/동음이의어 구분용 패턴 (키워드 → 제외 컨텍스트)
+    _AMBIGUOUS_KEYWORD_EXCLUSIONS = {
+        'ai': [
+            re.compile(r'고병원성\s*AI', re.IGNORECASE),
+            re.compile(r'조류\s*인플루엔자', re.IGNORECASE),
+            re.compile(r'조류\s*독감', re.IGNORECASE),
+            re.compile(r'AI\s*발생.*방역', re.IGNORECASE),
+            re.compile(r'AI\s*발생.*살처분', re.IGNORECASE),
+        ],
+    }
+
     def _filter_relevant_articles(
         self,
         news_list: List[NewsWithScores],
@@ -679,28 +690,52 @@ class ContentAssembler:
 
         scored_articles = []
         for news in news_list:
-            title_lower = (news.title or "").lower()
-            body_prefix = ((news.body or "")[:300]).lower()
+            title = news.title or ""
+            title_lower = title.lower()
+            body_prefix = (news.body or "")[:300]
+            combined = title + " " + body_prefix
 
+            # 1. 영어 기사 필터 (한국어 뉴스 생성이므로 영문 기사 제외)
+            korean_chars = sum(1 for c in title if '\uac00' <= c <= '\ud7a3')
+            if len(title) > 10 and korean_chars < len(title) * 0.2:
+                logger.debug("영어 기사 필터링: %s", title[:50])
+                scored_articles.append((news, -1))  # -1 = 제외
+                continue
+
+            # 2. 다의어 구분 (예: AI = 조류독감 vs 인공지능)
+            is_excluded = False
+            for kw in search_keywords:
+                kw_lower = kw.lower()
+                exclusion_patterns = self._AMBIGUOUS_KEYWORD_EXCLUSIONS.get(kw_lower, [])
+                for pattern in exclusion_patterns:
+                    if pattern.search(combined):
+                        logger.debug("다의어 필터링 (%s): %s", kw, title[:50])
+                        is_excluded = True
+                        break
+                if is_excluded:
+                    break
+
+            if is_excluded:
+                scored_articles.append((news, -1))  # -1 = 제외
+                continue
+
+            # 3. 키워드 관련도 점수 계산
             relevance = 0
             for kw in search_keywords:
                 kw_lower = kw.lower()
                 if kw_lower in title_lower:
-                    relevance += 3  # 제목 매칭 = 높은 관련도
-                if kw_lower in body_prefix:
-                    relevance += 1  # 본문 앞부분 매칭
+                    relevance += 3
+                if kw_lower in body_prefix.lower():
+                    relevance += 1
 
             scored_articles.append((news, relevance))
 
-        # 관련도 점수가 있는 기사만 유지
+        # 제외(-1) 기사를 빼고 관련 기사만 유지
         relevant = [news for news, score in scored_articles if score > 0]
 
         if relevant:
-            # 관련 기사가 있으면, 가장 높은 점수의 절반 미만인 기사 추가 필터링
-            # (같은 키워드를 포함하지만 토픽이 다른 경우 제거)
             max_score = max(score for _, score in scored_articles if score > 0)
             if max_score > 3:
-                # 관련도 차이가 큰 기사들 제거 (약한 관련 = 다른 토픽일 가능성)
                 strongly_relevant = [
                     news for news, score in scored_articles
                     if score >= max_score * 0.4
@@ -718,8 +753,9 @@ class ContentAssembler:
             )
             return relevant
 
-        # 관련 기사가 하나도 없으면 원본 반환
-        return news_list
+        # 관련 기사가 하나도 없으면 원본 반환 (제외 기사 빼고)
+        non_excluded = [news for news, score in scored_articles if score >= 0]
+        return non_excluded if non_excluded else news_list
 
     def _enrich_news_content(
         self,
@@ -1130,9 +1166,17 @@ class ContentAssembler:
     ]
 
     def _is_boilerplate_sentence(self, sentence: str) -> bool:
-        """저작권/면책/광고/인라인 매체명 문장인지 확인"""
+        """저작권/면책/광고/인라인 매체명/영어 문장인지 확인"""
         for pattern in self._BOILERPLATE_PATTERNS:
             if pattern.search(sentence):
+                return True
+
+        # 영어 문장 필터 (한국어 뉴스에 영문이 섞인 경우)
+        # 한글 비율이 20% 미만이면 영어 문장으로 판단하여 제외
+        if len(sentence) > 15:
+            korean_chars = sum(1 for c in sentence if '\uac00' <= c <= '\ud7a3')
+            total_alpha = sum(1 for c in sentence if c.isalpha())
+            if total_alpha > 0 and korean_chars / total_alpha < 0.2:
                 return True
 
         # 추가: 문장 끝에 매체명이 단독으로 붙어있는 경우 필터링

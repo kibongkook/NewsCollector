@@ -228,8 +228,16 @@ class FallbackGenerator:
         # 출처 문자열 생성
         sources_str = ", ".join(assembled.sources) if assembled.sources else "뉴스 출처"
 
-        # 최고 품질 소스 기사 선택 (모든 포맷에서 공용)
-        best_source = self._select_best_source(source_news, search_keywords)
+        # 제목-본문 일치: assembled의 primary source와 동일한 기사의 제목 사용
+        # (ContentAssembler가 본문을 구성할 때 사용한 기사 = 제목도 동일 기사)
+        best_source = None
+        if assembled.primary_source_id:
+            for news in source_news:
+                if news.id == assembled.primary_source_id:
+                    best_source = news
+                    break
+        if not best_source:
+            best_source = self._select_best_source(source_news, search_keywords)
 
         # 포맷별 렌더링
         if format == NewsFormat.BRIEF:
